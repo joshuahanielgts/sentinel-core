@@ -1,0 +1,11 @@
+node_modules/
+.env.local
+.env*.local
+dist/
+.next/
+.vercel
+.turbo
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+supabase/.temp/
