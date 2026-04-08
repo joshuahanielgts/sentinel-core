@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useContract, useAnalyzeContract, useClauses } from '@/hooks/useContracts'
-import RiskGauge from '@/components/app/RiskGauge'
+import RiskMeter from '@/components/app/RiskMeter'
 import ClauseCard from '@/components/app/ClauseCard'
-import ChatPanel from '@/components/app/ChatPanel'
+import NeuralChat from '@/components/app/NeuralChat'
+import StatusTerminal from '@/components/app/StatusTerminal'
+import ObligationTimeline from '@/components/app/ObligationTimeline'
+import { exportAnalysisReport } from '@/lib/exportPdf'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,19 +16,12 @@ import {
   MessageSquare,
   Play,
   AlertTriangle,
-  CheckCircle,
   FileText,
   Loader2,
+  Download,
+  Shield,
 } from 'lucide-react'
 import type { ContractStatus } from '@/types/api'
-
-const statusIcons: Record<ContractStatus, React.ReactNode> = {
-  pending: <FileText className="h-4 w-4 text-yellow-600" />,
-  uploaded: <CheckCircle className="h-4 w-4 text-blue-600" />,
-  analyzing: <Loader2 className="h-4 w-4 animate-spin text-purple-600" />,
-  complete: <CheckCircle className="h-4 w-4 text-green-600" />,
-  error: <AlertTriangle className="h-4 w-4 text-red-600" />,
-}
 
 export default function ContractDetailPage() {
   const { workspaceId, contractId } = useParams<{
@@ -42,9 +37,9 @@ export default function ContractDetailPage() {
   if (contractLoading) {
     return (
       <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-96 w-full" />
+        <Skeleton className="h-6 w-64 bg-accent" />
+        <Skeleton className="h-40 w-full bg-accent" />
+        <Skeleton className="h-80 w-full bg-accent" />
       </div>
     )
   }
@@ -52,7 +47,7 @@ export default function ContractDetailPage() {
   if (!contract) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-muted-foreground">Contract not found</p>
+        <p className="text-xs text-muted-foreground">Contract not found</p>
       </div>
     )
   }
@@ -64,22 +59,24 @@ export default function ContractDetailPage() {
   return (
     <div className="flex h-full">
       <div className="flex-1 overflow-auto p-6">
-        <div className="mb-6">
+        <div className="mb-4">
           <Button
             variant="ghost"
             size="sm"
+            className="text-xs text-muted-foreground hover:text-primary"
             onClick={() => navigate(`/w/${workspaceId}/contracts`)}
           >
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Contracts
+            <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
           </Button>
         </div>
 
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{contract.name}</h1>
-            <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+            <h1 className="text-lg font-bold text-foreground">{contract.name}</h1>
+            <div className="mt-1 flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
               <span className="flex items-center gap-1">
-                {statusIcons[contract.status]} {contract.status}
+                <StatusDot status={contract.status} />
+                {contract.status}
               </span>
               <span>{new Date(contract.created_at).toLocaleDateString()}</span>
               {contract.file_size && (
@@ -92,87 +89,92 @@ export default function ContractDetailPage() {
               <Button
                 onClick={() => analyzeContract.mutate(contractId!)}
                 disabled={analyzeContract.isPending}
+                className="text-xs"
               >
                 {analyzeContract.isPending ? (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Play className="mr-1 h-4 w-4" />
+                  <Play className="mr-1 h-3.5 w-3.5" />
                 )}
                 Analyze
               </Button>
             )}
             {isAnalyzing && (
-              <Button disabled>
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Analyzing...
+              <Button disabled className="text-xs">
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Analyzing...
               </Button>
             )}
             {isComplete && (
-              <Button variant="outline" onClick={() => setChatOpen(!chatOpen)}>
-                <MessageSquare className="mr-1 h-4 w-4" />
-                {chatOpen ? 'Close Chat' : 'Chat'}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  className="text-xs border-border/50"
+                  onClick={() => exportAnalysisReport(contract, clauses || [])}
+                >
+                  <Download className="mr-1 h-3.5 w-3.5" /> Export PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-xs border-border/50"
+                  onClick={() => setChatOpen(!chatOpen)}
+                >
+                  <MessageSquare className="mr-1 h-3.5 w-3.5" />
+                  {chatOpen ? 'Close Chat' : 'Chat'}
+                </Button>
+              </>
             )}
           </div>
         </div>
 
         {contract.error_message && (
-          <div className="mb-6 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            <AlertTriangle className="mr-2 inline h-4 w-4" />
+          <div className="mb-6 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-xs text-destructive">
+            <AlertTriangle className="mr-2 inline h-3.5 w-3.5" />
             {contract.error_message}
           </div>
         )}
 
         {isComplete && contract.risk_score !== null && (
-          <div className="mb-6 grid gap-6 md:grid-cols-3">
-            <Card className="flex flex-col items-center py-6">
-              <div className="relative">
-                <RiskGauge score={contract.risk_score} />
-              </div>
+          <div className="mb-6 grid gap-4 md:grid-cols-3">
+            <Card className="flex flex-col items-center justify-center border-border/50 bg-card py-6">
+              <RiskMeter score={contract.risk_score} />
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="border-border/50 bg-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-primary">
                   Summary
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-relaxed">{contract.summary}</p>
+                <p className="text-xs leading-relaxed text-foreground/80">{contract.summary}</p>
               </CardContent>
             </Card>
 
             <div className="space-y-4">
               {contract.key_obligations && contract.key_obligations.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Key Obligations
+                <Card className="border-border/50 bg-card">
+                  <CardHeader className="pb-1">
+                    <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                      Obligations
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-1 text-sm">
-                      {contract.key_obligations.map((ob, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="text-muted-foreground">-</span>
-                          {ob}
-                        </li>
-                      ))}
-                    </ul>
+                    <ObligationTimeline obligations={contract.key_obligations} />
                   </CardContent>
                 </Card>
               )}
               {contract.red_flags && contract.red_flags.length > 0 && (
-                <Card>
+                <Card className="border-border/50 bg-card">
                   <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-1 text-sm font-medium text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5" /> Red Flags
+                    <CardTitle className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#ff3366]">
+                      <AlertTriangle className="h-3 w-3" /> Red Flags
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-1 text-sm">
+                    <ul className="space-y-1.5">
                       {contract.red_flags.map((rf, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="text-destructive">-</span>
+                        <li key={i} className="flex gap-2 text-xs text-foreground/80">
+                          <span className="text-[#ff3366]">-</span>
                           {rf}
                         </li>
                       ))}
@@ -187,20 +189,20 @@ export default function ContractDetailPage() {
         {isComplete && (
           <Tabs defaultValue="all">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Clauses</h2>
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="critical">Critical</TabsTrigger>
-                <TabsTrigger value="high">High</TabsTrigger>
-                <TabsTrigger value="medium">Medium</TabsTrigger>
-                <TabsTrigger value="low">Low</TabsTrigger>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-primary">Clauses</h2>
+              <TabsList className="bg-accent/50">
+                <TabsTrigger value="all" className="text-[10px]">All</TabsTrigger>
+                <TabsTrigger value="critical" className="text-[10px]">Critical</TabsTrigger>
+                <TabsTrigger value="high" className="text-[10px]">High</TabsTrigger>
+                <TabsTrigger value="medium" className="text-[10px]">Medium</TabsTrigger>
+                <TabsTrigger value="low" className="text-[10px]">Low</TabsTrigger>
               </TabsList>
             </div>
 
             {clausesLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-28 w-full" />
+                  <Skeleton key={i} className="h-24 w-full bg-accent" />
                 ))}
               </div>
             ) : (
@@ -214,7 +216,7 @@ export default function ContractDetailPage() {
                   {(clauses || []).filter(
                     (c) => level === 'all' || c.risk_level === level
                   ).length === 0 && (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
+                    <p className="py-8 text-center text-xs text-muted-foreground">
                       No {level === 'all' ? '' : level} clauses found.
                     </p>
                   )}
@@ -225,48 +227,27 @@ export default function ContractDetailPage() {
         )}
 
         {!isComplete && contract.status !== 'error' && (
-          <Card>
-            <CardContent className="flex flex-col items-center py-12 text-center">
-              {contract.status === 'pending' && (
-                <>
-                  <FileText className="mb-3 h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium">Upload in progress</p>
-                  <p className="text-sm text-muted-foreground">
-                    This contract is being uploaded.
-                  </p>
-                </>
-              )}
-              {contract.status === 'uploaded' && (
-                <>
-                  <Play className="mb-3 h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium">Ready for analysis</p>
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    Click the Analyze button to start AI risk assessment.
-                  </p>
-                  <Button
-                    onClick={() => analyzeContract.mutate(contractId!)}
-                    disabled={analyzeContract.isPending}
-                  >
-                    <Play className="mr-1 h-4 w-4" /> Start Analysis
-                  </Button>
-                </>
-              )}
-              {contract.status === 'analyzing' && (
-                <>
-                  <Loader2 className="mb-3 h-10 w-10 animate-spin text-purple-600" />
-                  <p className="font-medium">Analysis in progress</p>
-                  <p className="text-sm text-muted-foreground">
-                    The AI is reviewing your contract. This may take a minute.
-                  </p>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StatusTerminal
+            status={contract.status}
+            contractName={contract.name}
+          />
+        )}
+
+        {!isComplete && contract.status !== 'error' && contract.status === 'uploaded' && (
+          <div className="mt-6 text-center">
+            <Button
+              onClick={() => analyzeContract.mutate(contractId!)}
+              disabled={analyzeContract.isPending}
+              className="text-xs"
+            >
+              <Play className="mr-1 h-3.5 w-3.5" /> Start Analysis
+            </Button>
+          </div>
         )}
       </div>
 
       {isComplete && (
-        <ChatPanel
+        <NeuralChat
           contractId={contractId!}
           open={chatOpen}
           onClose={() => setChatOpen(false)}
@@ -274,4 +255,15 @@ export default function ContractDetailPage() {
       )}
     </div>
   )
+}
+
+function StatusDot({ status }: { status: ContractStatus }) {
+  const colors: Record<ContractStatus, string> = {
+    pending: 'bg-[#ffaa00]',
+    uploaded: 'bg-[#00d4ff]',
+    analyzing: 'bg-[#a855f7] animate-pulse',
+    complete: 'bg-[#00ff88]',
+    error: 'bg-[#ff3366]',
+  }
+  return <span className={`inline-block h-1.5 w-1.5 rounded-full ${colors[status]}`} />
 }

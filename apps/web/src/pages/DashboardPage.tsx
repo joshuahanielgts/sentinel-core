@@ -1,9 +1,9 @@
 import { useParams } from 'react-router-dom'
 import { useDashboardStats } from '@/hooks/useDashboard'
+import ThreatFeed from '@/components/app/ThreatFeed'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FileText, AlertTriangle, Clock, BarChart3 } from 'lucide-react'
+import { FileText, AlertTriangle, Clock, Activity } from 'lucide-react'
 import {
   PieChart,
   Pie,
@@ -14,22 +14,14 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
 } from 'recharts'
 import type { RiskLevel } from '@/types/api'
 
 const riskColors: Record<RiskLevel, string> = {
-  low: '#22c55e',
-  medium: '#eab308',
-  high: '#f97316',
-  critical: '#ef4444',
-}
-
-const riskBadgeColors: Record<RiskLevel, string> = {
-  low: 'bg-green-100 text-green-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  high: 'bg-orange-100 text-orange-800',
-  critical: 'bg-red-100 text-red-800',
+  low: '#00ff88',
+  medium: '#ffaa00',
+  high: '#ff6633',
+  critical: '#ff3366',
 }
 
 export default function DashboardPage() {
@@ -39,15 +31,11 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-6 w-48 bg-accent" />
         <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-72" />
-          <Skeleton className="h-72" />
+          <Skeleton className="h-24 bg-accent" />
+          <Skeleton className="h-24 bg-accent" />
+          <Skeleton className="h-24 bg-accent" />
         </div>
       </div>
     )
@@ -73,94 +61,113 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6">
-      <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
+      <h1 className="mb-6 text-sm font-bold uppercase tracking-widest text-primary glow-text-blue">
+        Command Center
+      </h1>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-border/50 bg-card holo-hover">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <FileText className="h-6 w-6 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
+              <FileText className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.total_contracts}</p>
-              <p className="text-sm text-muted-foreground">Total Contracts</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{stats.total_contracts}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Contracts</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 bg-card holo-hover">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
-              <Clock className="h-6 w-6 text-yellow-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#ffaa00]/20 bg-[#ffaa00]/5">
+              <Clock className="h-5 w-5 text-[#ffaa00]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.pending_analysis}</p>
-              <p className="text-sm text-muted-foreground">Pending Analysis</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{stats.pending_analysis}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pending Analysis</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 bg-card holo-hover">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#ff3366]/20 bg-[#ff3366]/5">
+              <AlertTriangle className="h-5 w-5 text-[#ff3366]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{highRiskCount}</p>
-              <p className="text-sm text-muted-foreground">High/Critical Risk</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{highRiskCount}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">High/Critical Risk</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="mb-6 grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-4 w-4" /> Risk Distribution
+        <Card className="border-border/50 bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+              <Activity className="h-3.5 w-3.5" /> Risk Distribution
             </CardTitle>
           </CardHeader>
           <CardContent>
             {pieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
+                    innerRadius={55}
+                    outerRadius={85}
                     paddingAngle={4}
                     dataKey="value"
+                    stroke="none"
                     label={({ name, value }) => `${name}: ${value}`}
                   >
                     {pieData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f1629',
+                      border: '1px solid rgba(0,212,255,0.2)',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                      color: '#e0e6f0',
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-52 items-center justify-center text-xs text-muted-foreground">
                 No analyzed contracts yet
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-4 w-4" /> Contracts by Risk Level
+        <Card className="border-border/50 bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+              <Activity className="h-3.5 w-3.5" /> Contracts by Risk
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData}>
-                <XAxis dataKey="name" fontSize={12} />
-                <YAxis allowDecimals={false} fontSize={12} />
-                <Tooltip />
+                <XAxis dataKey="name" fontSize={10} tick={{ fill: '#5e6e8a' }} axisLine={{ stroke: '#1e2a45' }} />
+                <YAxis allowDecimals={false} fontSize={10} tick={{ fill: '#5e6e8a' }} axisLine={{ stroke: '#1e2a45' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#0f1629',
+                    border: '1px solid rgba(0,212,255,0.2)',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    color: '#e0e6f0',
+                  }}
+                />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {barData.map((entry) => (
                     <Cell key={entry.name} fill={entry.fill} />
@@ -172,36 +179,14 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-destructive" /> Recent High-Risk Clauses
+      <Card className="border-border/50 bg-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#ff3366]">
+            <AlertTriangle className="h-3.5 w-3.5" /> Threat Feed
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {stats.recent_high_risk_clauses.length > 0 ? (
-            <div className="space-y-3">
-              {stats.recent_high_risk_clauses.map((clause) => (
-                <div key={clause.id} className="flex items-start gap-3 rounded-lg border p-3">
-                  <Badge
-                    className={riskBadgeColors[clause.risk_level]}
-                    variant="secondary"
-                  >
-                    {clause.risk_level}
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{clause.contract_name}</p>
-                    <p className="text-xs text-muted-foreground">{clause.category}</p>
-                    <p className="mt-1 text-sm">{clause.rationale}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No high-risk clauses found yet.
-            </p>
-          )}
+          <ThreatFeed clauses={stats.recent_high_risk_clauses} />
         </CardContent>
       </Card>
     </div>

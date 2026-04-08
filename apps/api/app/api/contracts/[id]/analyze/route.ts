@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { analyzeContract, type TokenUsage } from '@/lib/gemini'
+import { analyzeContract } from '@/lib/gemini'
 import { errorResponse } from '@/lib/errors'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
 import type { Json } from '@/types/database'
+
+export const maxDuration = 300
 
 export const POST = withAuth(async (_req, user, params) => {
   try {
@@ -77,12 +79,16 @@ export const POST = withAuth(async (_req, user, params) => {
 
       const buffer = new Uint8Array(await fileData.arrayBuffer())
 
-      const result = await analyzeContract(
-        buffer,
-        contract.mime_type as 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      )
+      if (contract.mime_type !== 'application/pdf') {
+        return NextResponse.json(
+          { error: 'Only PDF files are supported for analysis' },
+          { status: 400 }
+        )
+      }
 
-      const meta = (result as unknown as { _meta: TokenUsage })._meta
+      const result = await analyzeContract(buffer, 'application/pdf')
+
+      const { _meta: meta } = result
 
       const clauseInserts = result.clauses.map((clause) => ({
         contract_id: contractId,

@@ -77,12 +77,14 @@ export const POST = withAuth(async (req, user, params) => {
 
     const { email, role } = parsed.data
 
-    const { data: userData } = await supabaseAdmin.auth.admin.listUsers()
-    const targetUser = userData?.users?.find((u) => u.email === email)
+    const { data: userId, error: lookupError } = await supabaseAdmin
+      .rpc('lookup_user_id_by_email', { target_email: email })
 
-    if (!targetUser) {
+    if (lookupError || !userId) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    const targetUser = { id: userId as string }
 
     const { data: existingMember } = await supabaseAdmin
       .from('workspace_members')

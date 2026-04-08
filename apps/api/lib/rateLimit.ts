@@ -1,3 +1,11 @@
+/**
+ * In-memory token-bucket rate limiter.
+ *
+ * WARNING: On Vercel serverless, each cold start resets this store.
+ * For production, replace with Upstash Redis or Vercel Edge rate limiting.
+ * This implementation is kept for local development and as a best-effort
+ * defense on warm instances.
+ */
 import { NextResponse } from 'next/server'
 
 interface RateLimitEntry {

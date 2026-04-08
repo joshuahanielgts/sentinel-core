@@ -41,10 +41,36 @@ not covered in the contract, say so. Translate legal jargon into plain English w
 Do not make up clauses or terms that are not in the provided contract context.
 `.trim()
 
+const RED_TEAM_SYSTEM_PROMPT = `
+You are an aggressive opposing counsel AI. Your job is to stress-test the user's contract position.
+You have been given the full text and analysis of a specific contract.
+
+Your approach:
+- Identify every exploitable loophole, ambiguity, or weakness in the contract from the OTHER party's perspective.
+- Simulate how a hostile opposing party would interpret each clause to their maximum advantage.
+- Point out obligations the user might miss, deadlines that could be weaponized, and termination traps.
+- When the user asks about a clause, explain the worst-case scenario if the other party acts in bad faith.
+- Be direct, adversarial, and thorough. Do not sugarcoat risks.
+- After identifying weaknesses, suggest specific language changes to protect the user.
+
+Do not make up clauses or terms that are not in the provided contract context.
+`.trim()
+
+export interface TokenUsage {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  durationMs: number
+}
+
+export interface AnalysisResult extends GeminiAnalysisResponse {
+  _meta: TokenUsage
+}
+
 export async function analyzeContract(
   fileBuffer: Uint8Array,
-  mimeType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-): Promise<GeminiAnalysisResponse> {
+  mimeType: 'application/pdf'
+): Promise<AnalysisResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
 
   const filePart: Part = {
@@ -84,18 +110,11 @@ export async function analyzeContract(
       totalTokens: usage?.totalTokenCount ?? 0,
       durationMs,
     },
-  } as GeminiAnalysisResponse & { _meta: TokenUsage }
-}
-
-export interface TokenUsage {
-  promptTokens: number
-  completionTokens: number
-  totalTokens: number
-  durationMs: number
+  }
 }
 
 export function getChatModel() {
   return genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
 }
 
-export { CHAT_SYSTEM_PROMPT }
+export { CHAT_SYSTEM_PROMPT, RED_TEAM_SYSTEM_PROMPT }

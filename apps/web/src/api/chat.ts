@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { ChatSession } from '@/types/api'
+import type { ChatSession, ChatMessage } from '@/types/api'
 
 export const chatApi = {
   getSessions: (contractId: string) =>
@@ -8,6 +8,9 @@ export const chatApi = {
   createSession: (contractId: string, title?: string) =>
     apiClient.post<ChatSession>('/chat/sessions', { contract_id: contractId, title }),
 
-  sendMessage: (sessionId: string, content: string) =>
-    apiClient.stream('/chat/message', { session_id: sessionId, content }),
+  getMessages: (sessionId: string) =>
+    apiClient.get<ChatMessage[]>(`/chat/messages?session_id=${sessionId}`),
+
+  sendMessage: (sessionId: string, content: string, redTeam = false) =>
+    apiClient.stream('/chat/message', { session_id: sessionId, content, red_team: redTeam }),
 }

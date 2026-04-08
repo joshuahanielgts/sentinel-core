@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getChatModel, CHAT_SYSTEM_PROMPT } from '@/lib/gemini'
+import { getChatModel, CHAT_SYSTEM_PROMPT, RED_TEAM_SYSTEM_PROMPT } from '@/lib/gemini'
 import { errorResponse } from '@/lib/errors'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { z } from 'zod'
 const MessageSchema = z.object({
   session_id: z.string().uuid(),
   content: z.string().min(1).max(10000),
+  red_team: z.boolean().optional().default(false),
 })
 
 export const POST = withAuth(async (req, user) => {
@@ -28,7 +29,7 @@ export const POST = withAuth(async (req, user) => {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { session_id, content } = parsed.data
+    const { session_id, content, red_team } = parsed.data
 
     const { data: session } = await supabaseAdmin
       .from('chat_sessions')
@@ -93,7 +94,8 @@ export const POST = withAuth(async (req, user) => {
       .filter(Boolean)
       .join('\n')
 
-    const systemPrompt = `${CHAT_SYSTEM_PROMPT}\n\n--- CONTRACT CONTEXT ---\n${contractContext}`
+    const basePrompt = red_team ? RED_TEAM_SYSTEM_PROMPT : CHAT_SYSTEM_PROMPT
+    const systemPrompt = `${basePrompt}\n\n--- CONTRACT CONTEXT ---\n${contractContext}`
 
     const chatHistory = (history || []).map((msg) => ({
       role: msg.role === 'user' ? 'user' as const : 'model' as const,

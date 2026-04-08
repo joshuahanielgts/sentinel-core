@@ -16,8 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { Shield, Plus, LogOut } from 'lucide-react'
+import { Shield, Plus, LogOut, Briefcase } from 'lucide-react'
 
 export default function WorkspacesPage() {
   const { data: workspaces, isLoading } = useWorkspaces()
@@ -45,43 +44,44 @@ export default function WorkspacesPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-muted/40 px-4 py-12">
-      <div className="mb-8 flex items-center gap-2">
-        <Shield className="h-8 w-8 text-primary" />
-        <span className="text-2xl font-bold">Sentinel AI</span>
+    <div className="flex min-h-screen flex-col items-center bg-background cyber-grid scanline px-4 py-12">
+      <div className="mb-6 flex items-center gap-2.5">
+        <Shield className="h-6 w-6 text-primary" />
+        <span className="text-lg font-bold tracking-widest text-primary glow-text-blue">SENTINEL</span>
       </div>
 
-      <div className="mb-6 flex items-center gap-4">
-        <span className="text-sm text-muted-foreground">{user?.email}</span>
+      <div className="mb-8 flex items-center gap-4">
+        <span className="text-xs text-muted-foreground">{user?.email}</span>
         <Button
           variant="ghost"
           size="sm"
+          className="text-xs text-muted-foreground hover:text-destructive"
           onClick={() => signOut().then(() => navigate('/login'))}
         >
-          <LogOut className="mr-1 h-4 w-4" /> Sign out
+          <LogOut className="mr-1 h-3.5 w-3.5" /> Sign out
         </Button>
       </div>
 
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Your Workspaces</h1>
+          <h1 className="text-sm font-bold uppercase tracking-wider text-foreground">Workspaces</h1>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-1 h-4 w-4" /> New Workspace
+              <Button size="sm" className="text-xs">
+                <Plus className="mr-1 h-3.5 w-3.5" /> New Workspace
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="border-border/50 bg-card">
               <form onSubmit={handleCreate}>
                 <DialogHeader>
-                  <DialogTitle>Create Workspace</DialogTitle>
-                  <DialogDescription>
-                    Create a new workspace to organize your contracts.
+                  <DialogTitle className="text-primary text-sm">Create Workspace</DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Create a secure workspace to organize your contracts.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ws-name">Name</Label>
+                    <Label htmlFor="ws-name" className="text-xs">Name</Label>
                     <Input
                       id="ws-name"
                       placeholder="My Company"
@@ -91,10 +91,11 @@ export default function WorkspacesPage() {
                         setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))
                       }}
                       required
+                      className="border-border/50 bg-accent/30 text-xs"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="ws-slug">Slug</Label>
+                    <Label htmlFor="ws-slug" className="text-xs">Slug</Label>
                     <Input
                       id="ws-slug"
                       placeholder="my-company"
@@ -102,14 +103,15 @@ export default function WorkspacesPage() {
                       onChange={(e) => setSlug(e.target.value)}
                       pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
                       required
+                      className="border-border/50 bg-accent/30 text-xs"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground">
                       Lowercase letters, numbers, and hyphens only.
                     </p>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={createWorkspace.isPending}>
+                  <Button type="submit" disabled={createWorkspace.isPending} className="text-xs">
                     {createWorkspace.isPending ? 'Creating...' : 'Create'}
                   </Button>
                 </DialogFooter>
@@ -121,39 +123,45 @@ export default function WorkspacesPage() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />
+              <div key={i} className="h-16 animate-pulse rounded-lg border border-border/30 bg-card" />
             ))}
           </div>
         ) : workspaces && workspaces.length > 0 ? (
           <div className="space-y-3">
             {workspaces.map((ws) => (
-              <Card
+              <div
                 key={ws.id}
-                className="cursor-pointer transition-shadow hover:shadow-md"
+                className="cursor-pointer rounded-lg border border-border/50 bg-card p-4 transition-all holo-hover"
                 onClick={() => handleSelect(ws)}
               >
-                <CardHeader className="flex-row items-center justify-between py-4">
-                  <div>
-                    <CardTitle className="text-base">{ws.name}</CardTitle>
-                    <CardDescription className="text-xs">/{ws.slug}</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md border border-primary/20 bg-accent/50">
+                      <Briefcase className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{ws.name}</p>
+                      <p className="text-[10px] text-muted-foreground">/{ws.slug}</p>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{ws.role}</Badge>
-                </CardHeader>
-              </Card>
+                  <span className="rounded border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
+                    {ws.role}
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center py-12 text-center">
-              <p className="mb-2 text-muted-foreground">No workspaces yet</p>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Create your first workspace to get started.
-              </p>
-              <Button onClick={() => setOpen(true)}>
-                <Plus className="mr-1 h-4 w-4" /> Create Workspace
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="rounded-lg border border-border/50 bg-card p-12 text-center">
+            <Briefcase className="mx-auto mb-3 h-8 w-8 text-primary/20" />
+            <p className="mb-1 text-sm font-medium">No workspaces yet</p>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Create your first workspace to begin analysis.
+            </p>
+            <Button onClick={() => setOpen(true)} className="text-xs">
+              <Plus className="mr-1 h-3.5 w-3.5" /> Create Workspace
+            </Button>
+          </div>
         )}
       </div>
     </div>

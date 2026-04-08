@@ -15,6 +15,10 @@ export function useContract(contractId: string) {
     queryKey: ['contract', contractId],
     queryFn: () => contractsApi.get(contractId),
     enabled: !!contractId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      return status === 'analyzing' ? 3000 : false
+    },
   })
 }
 

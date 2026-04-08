@@ -6,7 +6,6 @@ import { z } from 'zod'
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB

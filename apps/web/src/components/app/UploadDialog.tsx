@@ -21,7 +21,6 @@ interface UploadDialogProps {
 
 const ACCEPTED_TYPES = [
   'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]
 
 export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
@@ -39,9 +38,9 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
     setDragActive(false)
   }
 
-  function handleFile(f: File) {
+  const handleFile = useCallback((f: File) => {
     if (!ACCEPTED_TYPES.includes(f.type)) {
-      setError('Only PDF and DOCX files are accepted.')
+      setError('Only PDF files are accepted.')
       return
     }
     if (f.size > 25 * 1024 * 1024) {
@@ -50,17 +49,15 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
     }
     setError('')
     setFile(f)
-    if (!name) {
-      setName(f.name.replace(/\.[^.]+$/, ''))
-    }
-  }
+    setName((prev) => prev || f.name.replace(/\.[^.]+$/, ''))
+  }, [])
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragActive(false)
     const f = e.dataTransfer.files[0]
     if (f) handleFile(f)
-  }, [name])
+  }, [handleFile])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -87,7 +84,7 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Upload Contract</DialogTitle>
-            <DialogDescription>Upload a PDF or DOCX file (max 25 MB).</DialogDescription>
+            <DialogDescription>Upload a PDF file (max 25 MB).</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -118,7 +115,7 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
                   <p className="text-sm text-muted-foreground">
                     Drag and drop or click to select
                   </p>
-                  <p className="text-xs text-muted-foreground">PDF, DOCX up to 25 MB</p>
+                  <p className="text-xs text-muted-foreground">PDF up to 25 MB</p>
                 </>
               )}
             </div>
@@ -126,7 +123,7 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
             <input
               id="file-input"
               type="file"
-              accept=".pdf,.docx"
+              accept=".pdf"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0]

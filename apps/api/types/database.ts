@@ -375,6 +375,10 @@ export interface Database {
         Args: { p_workspace_id: string }
         Returns: boolean
       }
+      lookup_user_id_by_email: {
+        Args: { target_email: string }
+        Returns: string | null
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

@@ -1,15 +1,19 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import type { Workspace } from '@/types/api'
 
 interface WorkspaceContextType {
   workspace: Workspace | null
   setWorkspace: (workspace: Workspace | null) => void
+  savedWorkspaceId: string | null
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null)
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspaceState] = useState<Workspace | null>(null)
+  const [savedWorkspaceId] = useState<string | null>(
+    () => localStorage.getItem('sentinel_active_workspace')
+  )
 
   const setWorkspace = useCallback((ws: Workspace | null) => {
     setWorkspaceState(ws)
@@ -21,7 +25,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <WorkspaceContext.Provider value={{ workspace, setWorkspace }}>
+    <WorkspaceContext.Provider value={{ workspace, setWorkspace, savedWorkspaceId }}>
       {children}
     </WorkspaceContext.Provider>
   )

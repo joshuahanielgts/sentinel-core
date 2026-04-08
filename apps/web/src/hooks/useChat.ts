@@ -9,6 +9,14 @@ export function useChatSessions(contractId: string) {
   })
 }
 
+export function useChatMessages(sessionId: string | null) {
+  return useQuery({
+    queryKey: ['chat-messages', sessionId],
+    queryFn: () => chatApi.getMessages(sessionId!),
+    enabled: !!sessionId,
+  })
+}
+
 export function useCreateChatSession(contractId: string) {
   const queryClient = useQueryClient()
 
@@ -25,13 +33,15 @@ export function useSendMessage() {
     mutationFn: async ({
       sessionId,
       content,
+      redTeam,
       onChunk,
     }: {
       sessionId: string
       content: string
+      redTeam?: boolean
       onChunk: (text: string) => void
     }) => {
-      const response = await chatApi.sendMessage(sessionId, content)
+      const response = await chatApi.sendMessage(sessionId, content, redTeam)
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({ error: 'Unknown error' }))
