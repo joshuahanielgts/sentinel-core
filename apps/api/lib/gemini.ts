@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, type Part } from '@google/generative-ai'
+import mammoth from 'mammoth'
 import { env } from './env'
 import type { GeminiAnalysisResponse } from '@/types/api'
 
@@ -67,23 +68,37 @@ export interface AnalysisResult extends GeminiAnalysisResponse {
   _meta: TokenUsage
 }
 
+type SupportedMimeType =
+  | 'application/pdf'
+  | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
 export async function analyzeContract(
   fileBuffer: Uint8Array,
-  mimeType: 'application/pdf'
+  mimeType: SupportedMimeType
 ): Promise<AnalysisResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
 
-  const filePart: Part = {
-    inlineData: {
-      data: Buffer.from(fileBuffer).toString('base64'),
-      mimeType,
-    },
+  const parts: Part[] = []
+
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    const { value: text } = await mammoth.extractRawText({ buffer: Buffer.from(fileBuffer) })
+    if (!text.trim()) throw new Error('DOCX file appears to be empty')
+    parts.push({ text: `Contract text:\n\n${text}` })
+  } else {
+    parts.push({
+      inlineData: {
+        data: Buffer.from(fileBuffer).toString('base64'),
+        mimeType,
+      },
+    })
   }
+
+  parts.push({ text: 'Analyze this contract.' })
 
   const startTime = Date.now()
 
   const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [filePart, { text: 'Analyze this contract.' }] }],
+    contents: [{ role: 'user', parts }],
     systemInstruction: ANALYSIS_SYSTEM_PROMPT,
     generationConfig: {
       responseMimeType: 'application/json',

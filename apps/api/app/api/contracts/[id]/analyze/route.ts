@@ -79,14 +79,16 @@ export const POST = withAuth(async (_req, user, params) => {
 
       const buffer = new Uint8Array(await fileData.arrayBuffer())
 
-      if (contract.mime_type !== 'application/pdf') {
+      const supportedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'] as const
+      type MimeType = typeof supportedTypes[number]
+      if (!supportedTypes.includes(contract.mime_type as MimeType)) {
         return NextResponse.json(
-          { error: 'Only PDF files are supported for analysis' },
+          { error: 'Unsupported file type for analysis' },
           { status: 400 }
         )
       }
 
-      const result = await analyzeContract(buffer, 'application/pdf')
+      const result = await analyzeContract(buffer, contract.mime_type as MimeType)
 
       const { _meta: meta } = result
 

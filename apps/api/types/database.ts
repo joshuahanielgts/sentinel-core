@@ -340,6 +340,7 @@ export interface Database {
         Row: {
           id: string
           session_id: string
+          workspace_id: string
           role: string
           content: string
           created_at: string
@@ -347,6 +348,7 @@ export interface Database {
         Insert: {
           id?: string
           session_id: string
+          workspace_id: string
           role: string
           content: string
           created_at?: string
@@ -354,6 +356,7 @@ export interface Database {
         Update: {
           id?: string
           session_id?: string
+          workspace_id?: string
           role?: string
           content?: string
           created_at?: string
@@ -364,6 +367,13 @@ export interface Database {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           }
         ]

@@ -54,7 +54,7 @@ export const POST = withAuth(async (req, user) => {
 
     await supabaseAdmin
       .from('chat_messages')
-      .insert({ session_id, role: 'user', content })
+      .insert({ session_id, role: 'user', content, workspace_id: session.workspace_id })
 
     const { data: clauses } = await supabaseAdmin
       .from('contract_clauses')
@@ -124,7 +124,7 @@ export const POST = withAuth(async (req, user) => {
 
           await supabaseAdmin
             .from('chat_messages')
-            .insert({ session_id, role: 'assistant', content: fullResponse })
+            .insert({ session_id, role: 'assistant', content: fullResponse, workspace_id: session.workspace_id })
 
           await supabaseAdmin
             .from('chat_sessions')

@@ -224,6 +224,9 @@ create table contracts (
   status          text not null default 'pending'
                     check (status in ('pending', 'uploaded', 'analyzing', 'complete', 'error')),
   risk_score      integer check (risk_score between 0 and 100),
+  summary         text,
+  key_obligations jsonb,
+  red_flags       jsonb,
   error_message   text,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
@@ -272,11 +275,12 @@ create table chat_sessions (
 
 -- 8. chat_messages
 create table chat_messages (
-  id          uuid primary key default gen_random_uuid(),
-  session_id  uuid not null references chat_sessions(id) on delete cascade,
-  role        text not null check (role in ('user', 'assistant')),
-  content     text not null,
-  created_at  timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  session_id    uuid not null references chat_sessions(id) on delete cascade,
+  workspace_id  uuid not null references workspaces(id) on delete cascade,
+  role          text not null check (role in ('user', 'assistant')),
+  content       text not null,
+  created_at    timestamptz not null default now()
 );
 ```
 
@@ -451,7 +455,7 @@ export async function analyzeContract(
   fileBuffer: Uint8Array,
   mimeType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ): Promise<GeminiAnalysisResponse> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
 
   const filePart: Part = {
     inlineData: {
@@ -636,15 +640,15 @@ Work through phases in strict order. Do not start a phase until the previous one
 
 | Phase | Scope | Status |
 |---|---|---|
-| **1** | DB schema, triggers, RLS, storage | ⬜ Not started |
-| **2** | Next.js scaffold, `withAuth`, env validation, TS types, route stubs | ⬜ Not started |
-| **3** | Workspace + members API (full CRUD) | ⬜ Not started |
-| **4** | Vite frontend, auth flows, route guards, workspace context, app shell | ⬜ Not started |
-| **5** | Document upload pipeline (signed URL flow, contracts list page) | ⬜ Not started |
-| **6** | Gemini analysis pipeline, clause storage, contract detail page, risk gauge | ⬜ Not started |
-| **7** | Contract chat (sessions, streaming messages, chat panel) | ⬜ Not started |
-| **8** | Dashboard (stats API, Recharts visualizations, alerts panel) | ⬜ Not started |
-| **9** | Hardening (error boundaries, rate limiting, RLS audit, MIME validation) | ⬜ Not started |
+| **1** | DB schema, triggers, RLS, storage | ✅ Complete |
+| **2** | Next.js scaffold, `withAuth`, env validation, TS types, route stubs | ✅ Complete |
+| **3** | Workspace + members API (full CRUD) | ✅ Complete |
+| **4** | Vite frontend, auth flows, route guards, workspace context, app shell | ✅ Complete |
+| **5** | Document upload pipeline (signed URL flow, contracts list page) | ✅ Complete |
+| **6** | Gemini analysis pipeline, clause storage, contract detail page, risk gauge | ✅ Complete |
+| **7** | Contract chat (sessions, streaming messages, chat panel) | ✅ Complete |
+| **8** | Dashboard (stats API, Recharts visualizations, alerts panel) | ✅ Complete |
+| **9** | Hardening (error boundaries, rate limiting, RLS audit, MIME validation) | ✅ Complete |
 | **10** | Stripe payments, usage gates, billing page | ⬜ Not started |
 
 ---

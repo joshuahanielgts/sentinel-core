@@ -6,7 +6,10 @@ import { z } from 'zod'
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const
+
+const ALLOWED_EXTENSIONS = new Set(['.pdf', '.docx'])
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
 
@@ -33,6 +36,11 @@ export const POST = withAuth(async (req, user) => {
     }
 
     const { name, file_name, file_size, mime_type, workspace_id } = parsed.data
+
+    const ext = file_name.toLowerCase().slice(file_name.lastIndexOf('.'))
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return NextResponse.json({ error: 'Invalid file extension' }, { status: 400 })
+    }
 
     const { data: membership } = await supabaseAdmin
       .from('workspace_members')
