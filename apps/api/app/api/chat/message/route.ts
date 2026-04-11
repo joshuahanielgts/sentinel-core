@@ -9,7 +9,7 @@ import { z } from 'zod'
 const MessageSchema = z.object({
   session_id: z.string().uuid(),
   content: z.string().min(1).max(10000),
-  red_team: z.boolean().optional().default(false),
+  mode: z.enum(['normal', 'redteam']).optional().default('normal'),
 })
 
 export const POST = withAuth(async (req, user) => {
@@ -29,7 +29,7 @@ export const POST = withAuth(async (req, user) => {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { session_id, content, red_team } = parsed.data
+    const { session_id, content, mode } = parsed.data
 
     const { data: session } = await supabaseAdmin
       .from('chat_sessions')
@@ -94,7 +94,7 @@ export const POST = withAuth(async (req, user) => {
       .filter(Boolean)
       .join('\n')
 
-    const basePrompt = red_team ? RED_TEAM_SYSTEM_PROMPT : CHAT_SYSTEM_PROMPT
+    const basePrompt = mode === 'redteam' ? RED_TEAM_SYSTEM_PROMPT : CHAT_SYSTEM_PROMPT
     const systemPrompt = `${basePrompt}\n\n--- CONTRACT CONTEXT ---\n${contractContext}`
 
     const chatHistory = (history || []).map((msg) => ({

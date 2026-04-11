@@ -32,11 +32,13 @@ export interface UploadContractResponse {
   contract_id: string
   upload_url: string
   upload_path: string
+  token: string
 }
 
 export interface ChatMessageRequest {
   session_id: string
   content: string
+  mode?: 'normal' | 'redteam'
 }
 
 export interface DashboardStats {
