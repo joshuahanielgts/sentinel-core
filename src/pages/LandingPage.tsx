@@ -13,7 +13,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { GlowingEffect } from '@/components/ui/glowing-effect';
-import { SplineScene } from '@/components/ui/splite';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
 
@@ -112,12 +111,25 @@ function HeroSection() {
               </motion.div>
             </div>
 
-            {/* Right content - 3D Spline Scene */}
-            <div className="flex-1 relative min-h-[300px] md:min-h-0">
-              <SplineScene
-                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                className="w-full h-full"
-              />
+            {/* Right content - lightweight animated placeholder */}
+            <div className="flex-1 relative min-h-[300px] md:min-h-0 flex items-center justify-center">
+              <div className="relative w-64 h-64">
+                <div
+                  className="absolute inset-0 rounded-full border border-primary/20 animate-spin"
+                  style={{ animationDuration: '8s' }}
+                />
+                <div className="absolute inset-4 rounded-full border border-primary/30 animate-pulse" />
+                <div
+                  className="absolute inset-8 rounded-full bg-primary/5 flex items-center justify-center shadow-[0_0_60px_10px_hsl(217_91%_60%/0.15)]"
+                >
+                  <Shield className="w-20 h-20 text-primary opacity-80" strokeWidth={1} />
+                </div>
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s' }}>
+                  <div
+                    className="w-3 h-3 rounded-full bg-primary absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-[0_0_10px_2px_hsl(217_91%_60%/0.6)]"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </Card>

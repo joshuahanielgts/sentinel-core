@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI, type Part } from '@google/generative-ai'
-import mammoth from 'mammoth'
 import { env } from './env'
 import type { GeminiAnalysisResponse } from '@/types/api'
 
@@ -35,21 +34,16 @@ Risk scoring:
 - 76-100: Critical risk. Clauses that could expose the signing party to severe liability.
 `.trim()
 
-const CHAT_SYSTEM_PROMPT = `
-You are a helpful legal assistant AI. You have been given the full text and analysis of a specific contract.
-Answer the user's questions about this contract clearly and accurately. If the user asks about something
-not covered in the contract, say so. Translate legal jargon into plain English when asked.
-Do not make up clauses or terms that are not in the provided contract context.
+export const RED_TEAM_PROMPT = `
+You are opposing counsel. Your sole objective is to find every weakness,
+loophole, ambiguity, and exploitable clause in this contract that could be
+used against the party who requested this analysis. Be adversarial, precise,
+and cite exact clause language. Leave no vulnerability unidentified.
 `.trim()
 
-const RED_TEAM_SYSTEM_PROMPT = `
-You are opposing counsel AI. Your job is to stress-test the user's position on this contract.
-Challenge every assumption. Find loopholes and ambiguities that the other party could exploit.
-Be adversarial, precise, and specific. Use the contract text and analysis to identify where
-the user's party is most exposed.
-
-When useful, suggest concrete language changes that reduce the user's risk.
-Do not make up clauses or terms that are not in the provided contract context.
+export const NORMAL_CHAT_PROMPT = `
+You are a senior contract attorney AI. Answer questions about this contract
+accurately. Cite specific clauses when relevant. Be concise and clear.
 `.trim()
 
 export interface TokenUsage {
@@ -75,10 +69,11 @@ export async function analyzeContract(
 
   const parts: Part[] = []
 
-  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    const { value: text } = await mammoth.extractRawText({ buffer: Buffer.from(fileBuffer) })
-    if (!text.trim()) throw new Error('DOCX file appears to be empty')
-    parts.push({ text: `Contract text:\n\n${text}` })
+  if (mimeType.includes('wordprocessingml')) {
+    const mammoth = await import('mammoth')
+    const result = await mammoth.extractRawText({ buffer: Buffer.from(fileBuffer) })
+    if (!result.value.trim()) throw new Error('DOCX file appears to be empty')
+    parts.push({ text: result.value })
   } else {
     parts.push({
       inlineData: {
@@ -127,4 +122,3 @@ export function getChatModel() {
   return genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
 }
 
-export { CHAT_SYSTEM_PROMPT, RED_TEAM_SYSTEM_PROMPT }

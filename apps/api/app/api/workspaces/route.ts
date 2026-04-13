@@ -54,7 +54,7 @@ export const POST = withAuth(async (req, user) => {
 
     const parsed = CreateWorkspaceSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ error: parsed.error.issues.map((issue) => issue.message).join(', ') || 'Invalid request body' }, { status: 400 })
     }
 
     const { name, slug } = parsed.data

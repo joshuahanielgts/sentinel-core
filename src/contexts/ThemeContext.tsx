@@ -4,31 +4,49 @@ type Theme = 'dark' | 'light';
 
 interface ThemeContextType {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextType>({ theme: 'dark', toggleTheme: () => {} });
+const ThemeContext = createContext<ThemeContextType>({ theme: 'dark', setTheme: () => {}, toggleTheme: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem('sentinel_theme');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const stored = localStorage.getItem('sentinel-theme');
     return (stored === 'light' || stored === 'dark') ? stored : 'dark';
   });
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('sentinel_theme', theme);
-  }, [theme]);
+  const applyTheme = (nextTheme: Theme) => {
+    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+    document.documentElement.classList.toggle('light', nextTheme !== 'dark');
+  };
 
-  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  const setTheme = (nextTheme: Theme) => {
+    setThemeState(nextTheme);
+    localStorage.setItem('sentinel-theme', nextTheme);
+    applyTheme(nextTheme);
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  return {
+    theme: context?.theme ?? 'dark',
+    setTheme: context?.setTheme ?? (() => {}),
+    toggleTheme: context?.toggleTheme ?? (() => {}),
+  };
+}

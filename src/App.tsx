@@ -25,19 +25,23 @@ const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const ContractsPage = lazy(() => import("@/pages/ContractsPage"));
 const ContractDetailPage = lazy(() => import("@/pages/ContractDetailPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 10,
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
     },
   },
 });
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
@@ -55,6 +59,7 @@ function AnimatedRoutes() {
 
           <Route element={<MarketingLayout />}>
             <Route path="/home" element={<LandingPage />} />
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
@@ -86,7 +91,7 @@ function AnimatedRoutes() {
           </Route>
 
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </AnimatePresence>
@@ -100,7 +105,12 @@ const App = () => (
         <WorkspaceProvider>
           <TooltipProvider>
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
               <AnimatedRoutes />
             </BrowserRouter>
           </TooltipProvider>

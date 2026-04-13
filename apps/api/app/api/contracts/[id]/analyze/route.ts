@@ -10,8 +10,8 @@ export const maxDuration = 300
 
 export const POST = withAuth(async (_req, user, params) => {
   try {
-    const rl = checkRateLimit(user.id, 'analyze', { maxTokens: 5, refillRate: 1, refillIntervalMs: 60_000 })
-    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs)
+    const allowed = await checkRateLimit(user.id, 5)
+    if (!allowed) return rateLimitResponse()
 
     const contractId = params.id
 

@@ -10,8 +10,8 @@ export const chatApi = {
     return apiClient.post<ChatSession>('/chat/sessions', { contract_id: contractId });
   },
 
-  getMessages(sessionId: string) {
-    return apiClient.get<ChatMessage[]>(`/chat/messages?session_id=${sessionId}`);
+  getMessages(_sessionId: string) {
+    return Promise.resolve([] as ChatMessage[]);
   },
 
   async sendMessage(

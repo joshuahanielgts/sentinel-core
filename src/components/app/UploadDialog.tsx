@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Upload, X, FileText } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +65,9 @@ export function UploadDialog({ open, onOpenChange, workspaceId }: UploadDialogPr
       <DialogContent className="glass border-border sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-mono text-foreground">UPLOAD CONTRACT</DialogTitle>
+          <DialogDescription className="sr-only">
+            Upload a PDF or DOCX file and provide a contract name.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

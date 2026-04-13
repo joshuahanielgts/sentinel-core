@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useWorkspaces, useCreateWorkspace } from '@/hooks/useWorkspaces';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Plus, LogOut } from 'lucide-react';
+import { Plus, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { SentinelLogo } from '@/components/app/SentinelLogo';
 import { toast } from 'sonner';
 import type { WorkspaceRole } from '@/types/api';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,7 @@ const roleBadge: Record<WorkspaceRole, string> = {
 };
 
 export default function WorkspacesPage() {
-  const { data: workspaces, isLoading } = useWorkspaces();
+  const { data: workspaces, isLoading, error } = useWorkspaces();
   const createWorkspace = useCreateWorkspace();
   const { setWorkspace } = useWorkspaceContext();
   const { signOut } = useAuth();
@@ -45,7 +46,7 @@ export default function WorkspacesPage() {
     }
   };
 
-  const handleSelect = (ws: typeof workspaces extends (infer T)[] | undefined ? T : never) => {
+  const handleSelect = (ws: NonNullable<typeof workspaces>[number]) => {
     setWorkspace(ws);
     navigate(`/w/${ws.id}/dashboard`);
   };
@@ -55,7 +56,7 @@ export default function WorkspacesPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-primary" />
+            <SentinelLogo size="md" linkTo="/" />
             <h1 className="font-mono text-2xl font-bold text-foreground tracking-wider">SELECT WORKSPACE</h1>
           </div>
           <div className="flex items-center gap-2">
@@ -69,7 +70,20 @@ export default function WorkspacesPage() {
           </div>
         </div>
 
-        {isLoading ? (
+        {error ? (
+          <div className="glass rounded-lg p-8 text-center space-y-3">
+            <AlertTriangle className="w-8 h-8 text-risk-high mx-auto" />
+            <p className="font-mono text-sm text-risk-high">
+              CANNOT CONNECT TO SERVER
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {error.message}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Make sure the API server is running and VITE_API_URL is correct.
+            </p>
+          </div>
+        ) : isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="skeleton-cyber rounded-lg h-24" />
@@ -108,6 +122,9 @@ export default function WorkspacesPage() {
         <DialogContent className="glass border-border sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-mono text-foreground">INITIALIZE WORKSPACE</DialogTitle>
+            <DialogDescription className="sr-only">
+              Enter a name and slug to create a new workspace.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

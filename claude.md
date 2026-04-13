@@ -25,10 +25,10 @@ The product has two distinct runtime environments:
 
 ## 2. Repository Structure
 
-### Frontend (`/apps/web` — Vite SPA)
+### Frontend (`/src` — Vite SPA)
 
 ```
-apps/web/
+src/
 ├── src/
 │   ├── api/              # Typed API client functions (never raw fetch)
 │   ├── components/
@@ -698,15 +698,15 @@ When generating code for this project, follow these constraints absolutely:
 
 ```bash
 # 1. Clone repos
-git clone <frontend-repo> apps/web
+# Frontend lives at repo root (src/) — no separate clone needed
 git clone <backend-repo>  apps/api
 
 # 2. Install deps
-cd apps/web && npm install
-cd ../api && npm install
+npm install
+cd apps/api && npm install
 
 # 3. Link Supabase project
-cd ../api
+cd apps/api
 npx supabase login
 npx supabase link --project-ref <your-project-ref>
 
@@ -721,7 +721,7 @@ npx supabase gen types typescript --project-id <id> > types/database.ts
 cd apps/api && npm run dev     # Next.js on :3001
 
 # Terminal 2
-cd apps/web && npm run dev     # Vite on :5173
+npm run dev                    # Vite on :5173
 ```
 
 ---
@@ -737,3 +737,20 @@ Before any PR is opened, manually verify:
 - [ ] A user cannot trigger analysis on a contract in another workspace (403 expected)
 - [ ] Chat messages persist across page refreshes
 - [ ] The dashboard stats reflect accurate counts for the active workspace only
+
+---
+
+## 15. Actual Repository Structure
+
+The frontend SPA lives at src/ in the repo root.
+There is NO apps/web/ directory.
+The backend lives at apps/api/.
+The supabase/ directory is at the repo root.
+
+Do not create apps/web/. Do not move src/ into apps/.
+This is intentional. The Vite config and package.json at the repo root
+serve the frontend. apps/api/ is the backend. They share one repo.
+
+When running locally:
+  Terminal 1: cd apps/api && npm run dev      (Next.js on :3001)
+  Terminal 2: npm run dev                      (Vite on :5173, run from root)

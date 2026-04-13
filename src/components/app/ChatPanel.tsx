@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useChatSessions, useCreateChatSession, useChatMessages, useSendMessage } from '@/hooks/useChat';
+import { chatApi } from '@/api/chat';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/api';
@@ -39,6 +40,13 @@ export function ChatPanel({ contractId, onClose }: ChatPanelProps) {
   useEffect(() => {
     setLocalMessages(messages ?? []);
   }, [messages]);
+
+  useEffect(() => {
+    if (!activeSessionId) return;
+    chatApi.getMessages(activeSessionId)
+      .then((msgs) => { if (msgs.length > 0) setLocalMessages(msgs); })
+      .catch(() => {});
+  }, [activeSessionId]);
 
   const handleSend = async () => {
     if (!input.trim() || !activeSessionId || sendMessage.isPending) return;

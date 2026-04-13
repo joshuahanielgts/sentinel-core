@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getChatModel, CHAT_SYSTEM_PROMPT, RED_TEAM_SYSTEM_PROMPT } from '@/lib/gemini'
+import { getChatModel, RED_TEAM_PROMPT, NORMAL_CHAT_PROMPT } from '@/lib/gemini'
 import { errorResponse } from '@/lib/errors'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
 import { z } from 'zod'
@@ -14,8 +14,8 @@ const MessageSchema = z.object({
 
 export const POST = withAuth(async (req, user) => {
   try {
-    const rl = checkRateLimit(user.id, 'chat', { maxTokens: 20, refillRate: 1, refillIntervalMs: 3_000 })
-    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs)
+    const allowed = await checkRateLimit(user.id, 20)
+    if (!allowed) return rateLimitResponse()
 
     let body: unknown
     try {
@@ -26,7 +26,7 @@ export const POST = withAuth(async (req, user) => {
 
     const parsed = MessageSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ error: parsed.error.issues.map((issue) => issue.message).join(', ') || 'Invalid request body' }, { status: 400 })
     }
 
     const { session_id, content, mode } = parsed.data
@@ -94,7 +94,7 @@ export const POST = withAuth(async (req, user) => {
       .filter(Boolean)
       .join('\n')
 
-    const basePrompt = mode === 'redteam' ? RED_TEAM_SYSTEM_PROMPT : CHAT_SYSTEM_PROMPT
+    const basePrompt = mode === 'redteam' ? RED_TEAM_PROMPT : NORMAL_CHAT_PROMPT
     const systemPrompt = `${basePrompt}\n\n--- CONTRACT CONTEXT ---\n${contractContext}`
 
     const chatHistory = (history || []).map((msg) => ({

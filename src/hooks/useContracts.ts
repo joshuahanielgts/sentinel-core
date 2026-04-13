@@ -25,9 +25,8 @@ export function useContract(contractId: string | undefined) {
     queryFn: () => contractsApi.get(contractId!),
     enabled: !!contractId,
     refetchInterval: (query) => {
-      const data = query.state.data as Contract | undefined;
-      if (data?.status === 'analyzing' || data?.status === 'pending') return 3000;
-      return false;
+      const status = (query.state.data as Contract | undefined)?.status;
+      return status === 'analyzing' ? 3000 : false;
     },
   });
 

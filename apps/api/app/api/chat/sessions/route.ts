@@ -65,7 +65,7 @@ export const POST = withAuth(async (req, user) => {
 
     const parsed = CreateSessionSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ error: parsed.error.issues.map((issue) => issue.message).join(', ') || 'Invalid request body' }, { status: 400 })
     }
 
     const { contract_id, title } = parsed.data

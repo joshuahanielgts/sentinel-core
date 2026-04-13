@@ -6,7 +6,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20, 'SUPABASE_SERVICE_ROLE_KEY looks too short — use the service_role key from Supabase Dashboard > Settings > API')
     .refine((key) => !key.includes('PASTE_YOUR'), { message: 'Replace the placeholder with your actual service_role key from Supabase Dashboard > Settings > API' }),
   GEMINI_API_KEY: z.string().min(1),
-  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  FRONTEND_URL: z.string().url(),
 })
 
 function validateEnv() {

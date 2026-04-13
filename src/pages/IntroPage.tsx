@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield } from 'lucide-react';
+import { SentinelLogo } from '@/components/app/SentinelLogo';
 
 const TOTAL_DURATION = 5000; // 5 seconds total
 
@@ -96,10 +97,7 @@ export default function IntroPage() {
               transition={{ delay: 0.3, duration: 0.6 }}
               className="text-center"
             >
-              <h1 className="font-mono text-4xl md:text-6xl font-bold tracking-tight">
-                <span className="text-primary">SENTINEL</span>
-                <span className="text-foreground"> AI</span>
-              </h1>
+              <SentinelLogo size="lg" linkTo="" showText={true} className="text-4xl" />
               {/* Animated underline */}
               <motion.div
                 className="h-[2px] mx-auto mt-3"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useContracts } from '@/hooks/useContracts';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext';
@@ -54,6 +54,11 @@ export function CommandPalette() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="glass border-border sm:max-w-lg p-0 gap-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Search contracts</DialogTitle>
+          <DialogDescription>Use the command palette to search and open contracts.</DialogDescription>
+        </DialogHeader>
+
         <div className="flex items-center border-b border-border px-4">
           <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <Input

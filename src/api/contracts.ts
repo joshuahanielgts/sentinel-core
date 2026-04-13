@@ -15,6 +15,10 @@ export const contractsApi = {
     return apiClient.get<ContractClause[]>(`/contracts/${contractId}/clauses`);
   },
 
+  confirmUpload(contractId: string) {
+    return apiClient.patch<Contract>(`/contracts/${contractId}`, { status: 'uploaded' });
+  },
+
   async upload(workspaceId: string, file: File, name: string): Promise<{ contract_id: string; upload_path: string; token: string }> {
     const result = await apiClient.post<UploadContractResponse>('/contracts/upload', {
       name,
@@ -30,7 +34,7 @@ export const contractsApi = {
 
     if (error) throw new Error(`Storage upload failed: ${error.message}`);
 
-    await apiClient.patch<Contract>(`/contracts/${result.contract_id}`, { status: 'uploaded' });
+    await contractsApi.confirmUpload(result.contract_id);
 
     return result;
   },

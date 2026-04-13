@@ -27,12 +27,22 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data: SignupForm) => {
+  const onSubmit = async (formData: SignupForm) => {
     setLoading(true);
     try {
-      await signUp(data.email, data.password, data.fullName);
-      toast.success('Account created! Check your email to confirm.');
-      navigate('/login');
+      const { data, error } = await signUp(formData.email, formData.password, formData.fullName);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.session) {
+        toast.success('Account created!');
+        navigate('/workspaces');
+      } else {
+        toast.success('Account created! Check your email to confirm.');
+        navigate('/login');
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Signup failed');
     } finally {

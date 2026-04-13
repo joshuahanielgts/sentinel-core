@@ -72,25 +72,43 @@ export const POST = withAuth(async (req, user, params) => {
 
     const parsed = AddMemberSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ error: parsed.error.issues.map((issue) => issue.message).join(', ') || 'Invalid request body' }, { status: 400 })
     }
 
-    const { email, role } = parsed.data
+    const bodyData = parsed.data
 
-    const { data: userId, error: lookupError } = await supabaseAdmin
-      .rpc('lookup_user_id_by_email', { target_email: email })
-
-    if (lookupError || !userId) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    const adminApi = supabaseAdmin.auth.admin as unknown as {
+      getUserByEmail?: (email: string) => Promise<{ data: { user: { id: string } | null }, error: unknown }>
     }
 
-    const targetUser = { id: userId as string }
+    let userData: { user: { id: string } | null } | null = null
+    let userError: unknown = null
+
+    if (adminApi.getUserByEmail) {
+      const result = await adminApi.getUserByEmail(bodyData.email)
+      userData = result.data
+      userError = result.error
+    } else {
+      const { data: userId, error: lookupError } = await supabaseAdmin
+        .rpc('lookup_user_id_by_email', { target_email: bodyData.email })
+      userData = { user: userId ? { id: userId as string } : null }
+      userError = lookupError
+    }
+
+    if (userError || !userData?.user) {
+      return NextResponse.json(
+        { error: 'No Sentinel AI account found for that email address.' },
+        { status: 404 }
+      )
+    }
+
+    const targetUserId = userData.user.id
 
     const { data: existingMember } = await supabaseAdmin
       .from('workspace_members')
       .select('id')
       .eq('workspace_id', workspaceId)
-      .eq('user_id', targetUser.id)
+      .eq('user_id', targetUserId)
       .single()
 
     if (existingMember) {
@@ -101,8 +119,8 @@ export const POST = withAuth(async (req, user, params) => {
       .from('workspace_members')
       .insert({
         workspace_id: workspaceId,
-        user_id: targetUser.id,
-        role,
+        user_id: targetUserId,
+        role: bodyData.role,
       })
       .select()
       .single()
@@ -139,7 +157,7 @@ export const DELETE = withAuth(async (req, user, params) => {
 
     const parsed = RemoveMemberSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ error: parsed.error.issues.map((issue) => issue.message).join(', ') || 'Invalid request body' }, { status: 400 })
     }
 
     const { user_id: targetUserId } = parsed.data

@@ -1,7 +1,8 @@
 import { Outlet, useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { PageTransition } from '@/components/app/PageTransition';
-import { Shield, LayoutDashboard, FileText, Settings, LogOut, ChevronDown, Menu } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, LogOut, ChevronDown, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/app/ThemeToggle';
+import { SentinelLogo } from '@/components/app/SentinelLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspaceContext } from '@/contexts/WorkspaceContext';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
@@ -38,8 +39,7 @@ function SidebarContent({ workspaceId, workspace, workspaces, location, onNaviga
       {/* Branding */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <Shield className="w-6 h-6 text-primary" />
-          <span className="font-mono text-sm font-bold text-foreground tracking-wider">SENTINEL AI</span>
+          <SentinelLogo size="md" linkTo="/workspaces" />
           <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">v1.0</span>
         </div>
       </div>
@@ -93,7 +93,6 @@ function SidebarContent({ workspaceId, workspace, workspaces, location, onNaviga
           <span className="text-xs font-mono text-muted-foreground truncate flex-1">
             {user?.email}
           </span>
-          <ThemeToggle />
           <button onClick={onSignOut} className="text-muted-foreground hover:text-destructive transition-colors">
             <LogOut className="w-4 h-4" />
           </button>
@@ -178,14 +177,20 @@ export function AppLayout() {
 
       {/* Main content */}
       <main className={cn("flex-1 min-h-screen bg-background grid-bg overflow-auto", !isMobile && "ml-64")}>
+        {!isMobile && (
+          <header className="sticky top-0 z-30 flex items-center justify-end px-4 py-3 bg-card/95 backdrop-blur border-b border-border">
+            <ThemeToggle />
+          </header>
+        )}
+
         {/* Mobile header */}
         {isMobile && (
           <header className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-card/95 backdrop-blur border-b border-border">
             <button onClick={() => setMobileOpen(true)} className="text-foreground">
               <Menu className="w-5 h-5" />
             </button>
-            <Shield className="w-5 h-5 text-primary" />
-            <span className="font-mono text-sm font-bold text-foreground tracking-wider">SENTINEL AI</span>
+            <SentinelLogo size="sm" linkTo="/workspaces" />
+            <ThemeToggle className="ml-auto" />
           </header>
         )}
         <div className={isMobile ? 'pb-20' : ''}>

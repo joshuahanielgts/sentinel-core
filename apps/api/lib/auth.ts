@@ -4,7 +4,7 @@ import type { User } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { env } from './env'
 
-const supabaseAuth = createClient<Database>(
+const supabaseAuthClient = createClient<Database>(
   env.SUPABASE_URL,
   env.SUPABASE_ANON_KEY
 )
@@ -26,7 +26,7 @@ export function withAuth(handler: AuthHandler) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
+    const { data: { user }, error } = await supabaseAuthClient.auth.getUser(token)
     if (error || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }

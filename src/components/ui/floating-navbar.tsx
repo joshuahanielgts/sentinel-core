@@ -1,34 +1,70 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
-import { Home, DollarSign, Info, Mail, Moon, Sun, LucideIcon } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { DollarSign, Info, Mail, LucideIcon, Shield, Activity, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeToggle } from "@/components/app/ThemeToggle";
+import { SentinelLogo } from "@/components/app/SentinelLogo";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
-interface NavItem {
-  name: string;
-  url: string;
-  icon: LucideIcon;
-}
+type NavItem =
+  | {
+      name: string;
+      type: "anchor";
+      target: "features" | "how-it-works" | "pricing" | "faq";
+      icon: LucideIcon;
+    }
+  | {
+      name: string;
+      type: "page";
+      url: string;
+      icon: LucideIcon;
+    };
 
 const navItems: NavItem[] = [
-  { name: "Home", url: "/home", icon: Home },
-  { name: "Pricing", url: "/pricing", icon: DollarSign },
-  { name: "About", url: "/about", icon: Info },
-  { name: "Contact", url: "/contact", icon: Mail },
+  { name: "Features", type: "anchor", target: "features", icon: Shield },
+  { name: "How It Works", type: "anchor", target: "how-it-works", icon: Activity },
+  { name: "Pricing", type: "anchor", target: "pricing", icon: DollarSign },
+  { name: "FAQ", type: "anchor", target: "faq", icon: CircleHelp },
+  { name: "Pricing Page", type: "page", url: "/pricing", icon: DollarSign },
+  { name: "About", type: "page", url: "/about", icon: Info },
+  { name: "Contact", type: "page", url: "/contact", icon: Mail },
 ];
 
 interface FloatingNavBarProps {
   className?: string;
+  leftSlot?: ReactNode;
+  rightSlot?: ReactNode;
 }
 
-export function FloatingNavBar({ className }: FloatingNavBarProps) {
-  const { theme, toggleTheme } = useTheme();
+export function FloatingNavBar({ className, leftSlot, rightSlot }: FloatingNavBarProps) {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.pathname);
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(
+    location.pathname === "/home" || location.pathname === "/landing" ? "features" : location.pathname
+  );
+
+  const scrollTo = (id: "features" | "how-it-works" | "pricing" | "faq") => {
+    const scroll = () => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    const isLandingRoute = location.pathname === "/home" || location.pathname === "/landing";
+    if (isLandingRoute) {
+      scroll();
+      return;
+    }
+
+    navigate("/home");
+    setTimeout(scroll, 100);
+  };
 
   useEffect(() => {
+    if (location.pathname === "/home" || location.pathname === "/landing") {
+      return;
+    }
+
     setActiveTab(location.pathname);
   }, [location.pathname]);
 
@@ -40,23 +76,25 @@ export function FloatingNavBar({ className }: FloatingNavBarProps) {
       )}
     >
       <div className="flex items-center gap-1 bg-card/80 backdrop-blur-xl border border-border/50 px-2 py-1.5 rounded-full shadow-lg shadow-primary/5">
+        {leftSlot ?? (
+          <div className="pl-2 pr-1 hidden lg:block">
+            <SentinelLogo size="md" linkTo="/" />
+          </div>
+        )}
+
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.url;
+          const tabId = item.type === "anchor" ? item.target : item.url;
+          const isActive = activeTab === tabId;
+          const itemClassName = cn(
+            "relative cursor-pointer text-xs font-semibold px-4 py-2 rounded-full transition-all duration-300",
+            "text-muted-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            isActive && "bg-secondary text-primary",
+            !isActive && "hover:bg-primary/5"
+          );
 
-          return (
-            <Link
-              key={item.name}
-              to={item.url}
-              onClick={() => setActiveTab(item.url)}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "relative cursor-pointer text-xs font-semibold px-4 py-2 rounded-full transition-all duration-300",
-                "text-muted-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                isActive && "bg-secondary text-primary",
-                !isActive && "hover:bg-primary/5"
-              )}
-            >
+          const content = (
+            <>
               <span className="hidden sm:inline">{item.name}</span>
               <span className="sm:hidden">
                 <Icon className="w-4 h-4" />
@@ -81,23 +119,55 @@ export function FloatingNavBar({ className }: FloatingNavBarProps) {
                   </div>
                 </motion.div>
               )}
+            </>
+          );
+
+          if (item.type === "anchor") {
+            return (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => {
+                  setActiveTab(item.target);
+                  scrollTo(item.target);
+                }}
+                className={itemClassName}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.name}
+              to={item.url}
+              onClick={() => setActiveTab(item.url)}
+              aria-current={isActive ? "page" : undefined}
+              className={itemClassName}
+            >
+              {content}
             </Link>
           );
         })}
 
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+        {rightSlot ?? (
+          <>
+            <ThemeToggle />
 
-        <Link to="/signup">
-          <Button size="sm" className="rounded-full ml-1 px-4 text-xs font-semibold btn-glow">
-            Get Started
-          </Button>
-        </Link>
+            <Link to="/login">
+              <Button size="sm" variant="ghost" className="rounded-full px-4 text-xs font-semibold">
+                Sign In
+              </Button>
+            </Link>
+
+            <Link to="/signup">
+              <Button size="sm" className="rounded-full ml-1 px-4 text-xs font-semibold btn-glow">
+                Get Started
+              </Button>
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

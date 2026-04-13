@@ -1,13 +1,30 @@
-node_modules/
+# Environment
 .env
 .env.local
 .env*.local
+apps/api/.env.local
+*.env
+
+# Build outputs
 dist/
 .next/
-.vercel
-.turbo
+out/
+
+# Dependencies
+node_modules/
+apps/api/node_modules/
+
+# Lockfiles (use npm only)
+bun.lock
+bun.lockb
+
+# Misc
 *.tsbuildinfo
 .DS_Store
+
+# Project-specific
 Thumbs.db
+.vercel
+.turbo
 supabase/.temp/
 sentinel-ai-final/
