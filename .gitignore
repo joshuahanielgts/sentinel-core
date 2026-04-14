@@ -5,25 +5,48 @@
 apps/api/.env.local
 *.env
 
-# Build outputs
+# Build outputs — frontend
 dist/
+dist-ssr/
+
+# Build outputs — backend
+apps/api/dist/
+apps/api/.next/
+apps/api/tsconfig.tsbuildinfo
 .next/
 out/
+
+# TypeScript build info
+*.tsbuildinfo
 
 # Dependencies
 node_modules/
 apps/api/node_modules/
 
-# Lockfiles (use npm only)
+# Package manager
 bun.lock
 bun.lockb
 
-# Misc
-*.tsbuildinfo
+# OS
 .DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Misc
 
 # Project-specific
-Thumbs.db
 .vercel
 .turbo
 supabase/.temp/
