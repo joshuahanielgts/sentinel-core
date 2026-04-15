@@ -111,7 +111,11 @@ export const POST = withAuth(async (req, user) => {
     for (const modelId of CHAT_MODEL_CANDIDATES) {
       try {
         const model = getChatModel(modelId)
-        const chat = model.startChat({ history: chatHistory, systemInstruction: systemPrompt })
+        // Pass systemInstruction as a Part object — gemini-2.5+ rejects plain strings
+        const chat = model.startChat({
+          history: chatHistory,
+          systemInstruction: { parts: [{ text: systemPrompt }] } as never,
+        })
         result = await chat.sendMessageStream(content)
         chatError = null
         break
@@ -125,7 +129,9 @@ export const POST = withAuth(async (req, user) => {
     }
 
     if (!result) {
-      const errMsg = chatError instanceof Error ? chatError.message : 'All chat models failed'
+      const rawMsg = chatError instanceof Error ? chatError.message : 'All chat models failed'
+      // Truncate to prevent leaking full system prompt in error response
+      const errMsg = rawMsg.length > 200 ? rawMsg.slice(0, 200) + '…' : rawMsg
       return NextResponse.json({ error: `Chat unavailable: ${errMsg}` }, { status: 503 })
     }
 
