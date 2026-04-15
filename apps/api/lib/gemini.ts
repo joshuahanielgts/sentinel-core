@@ -4,8 +4,8 @@ import type { GeminiAnalysisResponse } from '@/types/api'
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
-export const ANALYSIS_MODEL_CANDIDATES = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'] as const
-export const DEFAULT_CHAT_MODEL_ID = 'gemini-1.5-flash'
+export const ANALYSIS_MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'] as const
+export const DEFAULT_CHAT_MODEL_ID = 'gemini-2.5-flash'
 
 const ANALYSIS_SYSTEM_PROMPT = `
 You are a senior contract attorney AI. Your job is to analyze legal contracts and return a structured risk assessment.
@@ -118,8 +118,18 @@ export async function analyzeContract(
       lastError = error
       console.error(`[Gemini] Model ${modelId} failed:`, error instanceof Error ? error.message : error)
       const msg = error instanceof Error ? error.message.toLowerCase() : ''
-      // Only retry with the next model if this is a quota/rate-limit error
-      const isRetryable = msg.includes('429') || msg.includes('quota') || msg.includes('rate limit') || msg.includes('rate_limit') || msg.includes('exhausted') || msg.includes('resource_exhausted')
+      // 404 = model retired/not found → try next model
+      // 429 / quota = rate limit → try next model
+      // anything else (auth, parse, network) → stop immediately
+      const isRetryable =
+        msg.includes('404') ||
+        msg.includes('not found') ||
+        msg.includes('429') ||
+        msg.includes('quota') ||
+        msg.includes('rate limit') ||
+        msg.includes('rate_limit') ||
+        msg.includes('exhausted') ||
+        msg.includes('resource_exhausted')
       if (!isRetryable) {
         console.error(`[Gemini] Non-retryable error, stopping fallback chain.`)
         break

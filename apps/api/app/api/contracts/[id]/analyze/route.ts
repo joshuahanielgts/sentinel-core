@@ -42,7 +42,7 @@ function formatAnalysisError(error: unknown): string {
     || lower.includes('exhausted')
     || lower.includes('429')
   ) {
-    return 'Gemini API quota exceeded. The free tier allows 1,500 requests/day for gemini-2.0-flash. Wait 1 minute and retry, or check your quota at console.cloud.google.com.'
+    return 'Gemini API quota exceeded. The free tier allows ~50 requests/day on gemini-2.5-flash. Wait a minute and retry, or check your quota at aistudio.google.com.'
   }
 
   return raw
