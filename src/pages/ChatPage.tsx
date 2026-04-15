@@ -112,7 +112,7 @@ export default function ChatPage() {
   const selectedContract = completedContracts.find((c) => c.id === selectedContractId);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-57px)]">
+    <div className="flex flex-col h-[calc(100vh-57px)] overflow-hidden">
       {/* Toolbar */}
       <div className="p-4 border-b border-border bg-card/95 backdrop-blur flex items-center gap-3 flex-wrap">
         <MessageSquare className="w-4 h-4 text-primary shrink-0" />
@@ -210,7 +210,7 @@ export default function ChatPage() {
       ) : (
         <>
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
             {localMessages.length === 0 && !sendMessage.isPending && (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
                 <Bot className="w-8 h-8 text-muted-foreground" />
