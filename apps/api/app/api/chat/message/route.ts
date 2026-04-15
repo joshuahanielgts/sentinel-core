@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { GenerateContentStreamResult } from '@google/generative-ai'
 import { withAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { getChatModel, RED_TEAM_PROMPT, NORMAL_CHAT_PROMPT } from '@/lib/gemini'
+import { getChatModel, CHAT_MODEL_CANDIDATES, RED_TEAM_PROMPT, NORMAL_CHAT_PROMPT } from '@/lib/gemini'
 import { errorResponse } from '@/lib/errors'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
 import { z } from 'zod'
@@ -103,13 +104,30 @@ export const POST = withAuth(async (req, user) => {
       parts: [{ text: msg.content }],
     }))
 
-    const model = getChatModel()
-    const chat = model.startChat({
-      history: chatHistory,
-      systemInstruction: systemPrompt,
-    })
+    // Try each model candidate until one works
+    let result: GenerateContentStreamResult | null = null
+    let chatError: unknown = null
 
-    const result = await chat.sendMessageStream(content)
+    for (const modelId of CHAT_MODEL_CANDIDATES) {
+      try {
+        const model = getChatModel(modelId)
+        const chat = model.startChat({ history: chatHistory, systemInstruction: systemPrompt })
+        result = await chat.sendMessageStream(content)
+        chatError = null
+        break
+      } catch (err) {
+        chatError = err
+        console.error(`[Gemini Chat] Model ${modelId} failed:`, err instanceof Error ? err.message : err)
+        const msg = err instanceof Error ? err.message.toLowerCase() : ''
+        const isRetryable = msg.includes('404') || msg.includes('not found') || msg.includes('429') || msg.includes('quota') || msg.includes('rate limit') || msg.includes('exhausted')
+        if (!isRetryable) break
+      }
+    }
+
+    if (!result) {
+      const errMsg = chatError instanceof Error ? chatError.message : 'All chat models failed'
+      return NextResponse.json({ error: `Chat unavailable: ${errMsg}` }, { status: 503 })
+    }
 
     const encoder = new TextEncoder()
     let fullResponse = ''

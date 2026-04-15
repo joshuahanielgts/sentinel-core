@@ -51,35 +51,32 @@ export function ChatPanel({ contractId, onClose }: ChatPanelProps) {
   const handleSend = async () => {
     if (!input.trim() || !activeSessionId || sendMessage.isPending) return;
     const text = input;
+    const tempId = crypto.randomUUID();
     setInput('');
     setLocalMessages((prev) => [
       ...prev,
-      {
-        id: crypto.randomUUID(),
-        session_id: activeSessionId,
-        role: 'user',
+      { id: tempId, session_id: activeSessionId, role: 'user', content: text, created_at: new Date().toISOString() },
+    ]);
+    setStreamText('');
+    try {
+      const fullText = await sendMessage.mutateAsync({
+        sessionId: activeSessionId,
         content: text,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-    setStreamText('');
-    const fullText = await sendMessage.mutateAsync({
-      sessionId: activeSessionId,
-      content: text,
-      mode: redTeam ? 'redteam' : 'normal',
-      onChunk: (accumulatedText) => setStreamText(accumulatedText),
-    });
-    setLocalMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        session_id: activeSessionId,
-        role: 'assistant',
-        content: fullText,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-    setStreamText('');
+        mode: redTeam ? 'redteam' : 'normal',
+        onChunk: (accumulatedText) => setStreamText(accumulatedText),
+      });
+      setLocalMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), session_id: activeSessionId, role: 'assistant', content: fullText, created_at: new Date().toISOString() },
+      ]);
+    } catch (err) {
+      setLocalMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setInput(text);
+      const { toast } = await import('sonner');
+      toast.error(err instanceof Error ? err.message : 'Chat failed — please try again');
+    } finally {
+      setStreamText('');
+    }
   };
 
   const handleNewSession = async () => {

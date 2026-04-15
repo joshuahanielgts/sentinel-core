@@ -167,7 +167,9 @@ export async function analyzeContract(
   }
 }
 
-export function getChatModel() {
-  return genAI.getGenerativeModel({ model: DEFAULT_CHAT_MODEL_ID })
+export const CHAT_MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'] as const
+
+export function getChatModel(modelId: string = DEFAULT_CHAT_MODEL_ID) {
+  return genAI.getGenerativeModel({ model: modelId })
 }
 

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { MessageSquare, Plus, Send, Target, ChevronDown, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -78,39 +79,36 @@ export default function ChatPage() {
     setLocalMessages([]);
   };
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() || !activeSessionId || sendMessage.isPending) return;
     const text = input;
+    const tempId = crypto.randomUUID();
     setInput('');
     setLocalMessages((prev) => [
       ...prev,
-      {
-        id: crypto.randomUUID(),
-        session_id: activeSessionId,
-        role: 'user',
+      { id: tempId, session_id: activeSessionId, role: 'user', content: text, created_at: new Date().toISOString() },
+    ]);
+    setStreamText('');
+    try {
+      const fullText = await sendMessage.mutateAsync({
+        sessionId: activeSessionId,
         content: text,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-    setStreamText('');
-    const fullText = await sendMessage.mutateAsync({
-      sessionId: activeSessionId,
-      content: text,
-      mode: redTeam ? 'redteam' : 'normal',
-      onChunk: (accumulatedText) => setStreamText(accumulatedText),
-    });
-    setLocalMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        session_id: activeSessionId,
-        role: 'assistant',
-        content: fullText,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-    setStreamText('');
-  };
+        mode: redTeam ? 'redteam' : 'normal',
+        onChunk: (accumulatedText) => setStreamText(accumulatedText),
+      });
+      setLocalMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), session_id: activeSessionId, role: 'assistant', content: fullText, created_at: new Date().toISOString() },
+      ]);
+    } catch (err) {
+      // Remove the optimistic user message on failure
+      setLocalMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setInput(text);
+      toast.error(err instanceof Error ? err.message : 'Chat failed — please try again');
+    } finally {
+      setStreamText('');
+    }
+  }, [input, activeSessionId, sendMessage, redTeam]);
 
   const selectedContract = completedContracts.find((c) => c.id === selectedContractId);
 
