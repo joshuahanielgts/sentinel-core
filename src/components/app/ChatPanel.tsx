@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useChatSessions, useCreateChatSession, useChatMessages, useSendMessage } from '@/hooks/useChat';
 import { chatApi } from '@/api/chat';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/api';
 
@@ -122,20 +121,20 @@ export function ChatPanel({ contractId, onClose }: ChatPanelProps) {
           <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
             <div
               className={cn(
-                'max-w-[85%] rounded-lg px-3 py-2 text-sm',
+                'max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words',
                 msg.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-surface border-l-2 border-l-cyan text-foreground'
               )}
             >
-              {msg.content}
+              {msg.content.replace(/\\n/g, '\n')}
             </div>
           </div>
         ))}
         {sendMessage.isPending && streamText && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-lg px-3 py-2 text-sm bg-surface border-l-2 border-l-cyan text-foreground">
-              {streamText}
+            <div className="max-w-[85%] rounded-lg px-3 py-2 text-sm bg-surface border-l-2 border-l-cyan text-foreground whitespace-pre-wrap break-words">
+              {streamText.replace(/\\n/g, '\n')}
               <span className="inline-block w-1.5 h-4 bg-cyan ml-0.5 animate-pulse" />
             </div>
           </div>
@@ -157,24 +156,18 @@ export function ChatPanel({ contractId, onClose }: ChatPanelProps) {
       {/* Input */}
       <div className="p-4 border-t border-border bg-background">
         <div className="flex gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'h-10 w-10 shrink-0',
-                  redTeam ? 'text-destructive shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-muted-foreground'
-                )}
-                onClick={() => setRedTeam(!redTeam)}
-              >
-                <Target className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {redTeam ? 'Red Team Mode: ACTIVE — AI simulates opposing counsel' : 'Red Team Mode: Disabled'}
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            variant={redTeam ? 'destructive' : 'outline'}
+            size="sm"
+            className={cn(
+              'h-10 shrink-0 font-mono text-xs gap-1 px-2',
+              redTeam ? 'shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-muted-foreground hover:text-destructive'
+            )}
+            onClick={() => setRedTeam(!redTeam)}
+          >
+            <Target className="w-3 h-3" />
+            {redTeam ? 'RT' : 'RT'}
+          </Button>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}

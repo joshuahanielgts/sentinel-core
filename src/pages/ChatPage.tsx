@@ -5,7 +5,6 @@ import { MessageSquare, Plus, Send, Target, ChevronDown, Bot } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useContracts } from '@/hooks/useContracts';
 import { useChatSessions, useCreateChatSession, useChatMessages, useSendMessage } from '@/hooks/useChat';
 import { chatApi } from '@/api/chat';
@@ -241,21 +240,21 @@ export default function ChatPage() {
               <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                 <div
                   className={cn(
-                    'max-w-[75%] rounded-lg px-4 py-3 text-sm leading-relaxed',
+                    'max-w-[75%] rounded-lg px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words',
                     msg.role === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'glass border-l-2 border-l-primary text-foreground'
                   )}
                 >
-                  {msg.content}
+                  {msg.content.replace(/\\n/g, '\n')}
                 </div>
               </div>
             ))}
 
             {sendMessage.isPending && streamText && (
               <div className="flex justify-start">
-                <div className="max-w-[75%] rounded-lg px-4 py-3 text-sm glass border-l-2 border-l-primary text-foreground leading-relaxed">
-                  {streamText}
+                <div className="max-w-[75%] rounded-lg px-4 py-3 text-sm glass border-l-2 border-l-primary text-foreground leading-relaxed whitespace-pre-wrap break-words">
+                  {streamText.replace(/\\n/g, '\n')}
                   <span className="inline-block w-1.5 h-4 bg-primary ml-0.5 animate-pulse" />
                 </div>
               </div>
@@ -284,24 +283,20 @@ export default function ChatPage() {
               </div>
             )}
             <div className="flex gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      'h-10 w-10 shrink-0',
-                      redTeam ? 'text-destructive shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-muted-foreground'
-                    )}
-                    onClick={() => setRedTeam(!redTeam)}
-                  >
-                    <Target className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {redTeam ? 'Red Team: ACTIVE — Click to disable' : 'Enable Red Team Mode'}
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                variant={redTeam ? 'destructive' : 'outline'}
+                size="sm"
+                className={cn(
+                  'h-10 shrink-0 font-mono text-xs gap-1.5 px-3',
+                  redTeam
+                    ? 'shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                    : 'text-muted-foreground hover:text-destructive hover:border-destructive/50'
+                )}
+                onClick={() => setRedTeam(!redTeam)}
+              >
+                <Target className="w-3.5 h-3.5" />
+                {redTeam ? 'RED TEAM ON' : 'RED TEAM'}
+              </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
