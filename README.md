@@ -21,7 +21,7 @@ This repository is a **monorepo**:
 │   ├── middleware.ts       # CORS
 │   └── vercel.json         # Vercel defaults for this app
 ├── supabase/migrations/    # SQL migrations
-├── vercel.json             # SPA routing (use when deploying frontend from repo root)
+├── vercel.frontend.json    # Copy → vercel.json for **frontend** Vercel project only (SPA rewrites)
 ├── claude.md               # Architecture & conventions
 └── README.md
 ```
@@ -79,20 +79,30 @@ Apply `supabase/migrations/00001_schema.sql` in the Supabase SQL Editor, or use 
 
 ## Deploying to Vercel
 
-Use **two Vercel projects** (one for the API, one for the SPA).
+Use **two separate Vercel projects** (API and SPA). They use the **same GitHub repo** but **different Root Directory** values.
+
+### If `/api/health` or `/` returns Vercel’s `404 NOT_FOUND`
+
+Your **backend** project is almost certainly building the **wrong folder**. When **Root Directory is empty**, Vercel runs `npm run build` at the repo root → **Vite** builds a static site to `dist/` — there is **no** Next.js and **no** `/api/*` routes.
+
+**Fix:** Vercel → **sentinel-core-backend** (or your API project) → **Settings** → **General** → **Root Directory** → set to **`apps/api`** → **Save** → **Deployments** → **Redeploy** (without cache).
+
+Also ensure **Output Directory** is **empty** (not `dist`). `dist` is only for the frontend project.
+
+---
 
 ### 1. Backend (Next.js API)
 
 1. Import this GitHub repo.
-2. **Root Directory:** `apps/api`
-3. Framework: Next.js (auto-detected).
-4. **Build settings (important):**
+2. **Root Directory:** `apps/api` (**required** — the literal text `apps/api`, not `/` or empty).
+3. Framework: **Next.js** (auto-detected from `apps/api`).
+4. **Build settings:**
    - **Output Directory:** leave **empty** — do **not** set `dist`.  
      Next.js writes to `.next/`; Vercel picks that up automatically.  
-     If you see *“output directory dist was not found”*, your API project was given the **frontend** setting by mistake — clear **Output Directory** under Project → Settings → General → Build & Development Settings, then redeploy.
+     If you see *“output directory dist was not found”*, clear **Output Directory** under Project → Settings → General → Build & Development Settings, then redeploy.
    - **Build Command:** `npm run build` (default).
    - **Install Command:** `npm install` (default).
-6. **Environment variables** (Production & Preview as needed):
+5. **Environment variables** (Production & Preview as needed):
 
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
@@ -101,23 +111,24 @@ Use **two Vercel projects** (one for the API, one for the SPA).
    - `FRONTEND_URL` — set to your **deployed frontend URL**, e.g. `https://your-app.vercel.app`  
      (must match the browser origin exactly, including `https`.)
 
-7. Deploy. Note the API URL, e.g. `https://sentinel-api.vercel.app`.
+6. Deploy. Note the API URL, e.g. `https://sentinel-api.vercel.app`.
 
-8. **Smoke-test after deploy** (no auth needed for these):
+7. **Smoke-test** (no auth):
    - `https://<your-api>.vercel.app/api/health` → JSON `{ "ok": true, ... }`
    - `https://<your-api>.vercel.app/` → JSON with `service: sentinel-api`  
-   If you still see Vercel’s generic `404 NOT_FOUND` page, the project is not running this Next app (wrong root directory, or old deployment). **Redeploy** after pulling latest `main`.
+   If you still see Vercel’s generic `404 NOT_FOUND`, the deployment is **not** this Next app — fix **Root Directory** and **Output Directory** above, then redeploy.
 
 **Contract analysis** uses `export const maxDuration = 300` on the analyze route. On **Vercel Hobby**, serverless execution time is limited (often 10–60s depending on plan). If analysis times out, upgrade to **Pro** or run the API on a host with longer limits.
 
 ### 2. Frontend (Vite static app)
 
 1. **Second** Vercel project, same repo.
-2. **Root Directory:** `.` (repository root, leave empty / `/`).
+2. **Root Directory:** `.` (repository root — leave empty in the UI, meaning “repo root”).
 3. **Build Command:** `npm run build`  
 4. **Output Directory:** `dist`  
 5. **Install Command:** `npm install`
-6. The root `vercel.json` provides SPA **rewrites** so React Router paths (e.g. `/w/:id/dashboard`) load `index.html`.
+6. **SPA routing:** Copy `vercel.frontend.json` to **`vercel.json`** at the repo root (same content) **or** add the same **rewrites** in the Vercel dashboard so client-side routes (e.g. `/w/:id/dashboard`) serve `index.html`.  
+   Do **not** reuse the frontend `vercel.json` or `dist` output settings on the **API** project.
 
 **Frontend environment variables**
 
@@ -170,8 +181,9 @@ cd apps/api && npm run build
 | CORS errors | `FRONTEND_URL` on API equals the exact frontend origin |
 | `401` from API | JWT sent from Supabase session; not expired |
 | Analysis timeout on Vercel | Plan limits; consider Pro or longer `maxDuration` eligibility |
-| SPA 404 on refresh | Root `vercel.json` rewrites; Output Directory `dist` |
-| API build: *Next.js output directory `dist` not found* | Backend project must **not** use `dist`. Clear **Output Directory** in Vercel (Next.js uses `.next` automatically). Only the **frontend** project uses `dist`. |
+| SPA 404 on refresh | Add SPA rewrites (see `vercel.frontend.json`); Output Directory `dist` |
+| API: Vercel `404` on `/api/health` | Backend **Root Directory** must be **`apps/api`**, not repo root. Empty root = Vite build + no API routes. |
+| API build: *Next.js output directory `dist` not found* | Backend project must **not** use `dist`. Clear **Output Directory** in Vercel. Only the **frontend** project uses `dist`. |
 | Invalid Supabase key | Use JWT keys (`eyJ...`), not publishable-only keys |
 
 ---
