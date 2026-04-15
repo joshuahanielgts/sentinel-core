@@ -65,7 +65,7 @@ export default function ContractDetailPage() {
   }
 
   return (
-    <div className={cn('p-6 space-y-6', chatOpen && 'mr-96')}>
+    <div className={cn('p-6 space-y-6 transition-all', chatOpen && 'mr-96')}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
@@ -81,10 +81,10 @@ export default function ContractDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {contract.status === 'uploaded' && (
+          {(contract.status === 'uploaded' || contract.status === 'error') && (
             <Button onClick={handleAnalyze} disabled={analyze.isPending} className="btn-glow font-mono">
               {analyze.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              RUN ANALYSIS
+              {contract.status === 'error' ? 'RETRY ANALYSIS' : 'RUN ANALYSIS'}
             </Button>
           )}
           {contract.status === 'analyzing' && (

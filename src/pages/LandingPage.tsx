@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,9 @@ import {
 import { GlowingEffect } from '@/components/ui/glowing-effect';
 import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/spotlight';
+import { Timeline } from '@/components/ui/timeline';
+
+const PricingSectionComponent = lazy(() => import('@/components/ui/pricing-section-4'));
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -46,7 +50,11 @@ function HeroSection() {
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 mb-6 w-fit"
               >
                 <Zap className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-mono text-primary tracking-wide">AI-POWERED CONTRACT INTELLIGENCE</span>
+                <span className="text-xs text-primary tracking-wide">
+                  <span className="font-glitch">SENTINEL</span>
+                  <span className="font-glitch"> AI</span>
+                  <span className="font-mono"> CONTRACT INTELLIGENCE</span>
+                </span>
               </motion.div>
 
               <motion.h1
@@ -184,7 +192,7 @@ function FeaturesSection() {
             Everything You Need to Analyze Risk
           </motion.h2>
           <motion.p variants={fadeUp} className="text-muted-foreground max-w-xl mx-auto">
-            From upload to insight in seconds. Sentinel AI covers the entire contract analysis workflow.
+            From upload to insight in seconds. <span className="font-glitch">Sentinel AI</span> covers the entire contract analysis workflow.
           </motion.p>
         </motion.div>
 
@@ -232,41 +240,33 @@ const steps = [
 ];
 
 function HowItWorksSection() {
+  const timelineData = steps.map((step) => {
+    const Icon = step.icon;
+
+    return {
+      title: step.num,
+      content: (
+        <div className="rounded-xl border border-border bg-card/70 backdrop-blur-sm p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <Icon className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="font-mono text-xl font-semibold text-foreground">{step.title}</h3>
+          </div>
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{step.desc}</p>
+        </div>
+      ),
+    };
+  });
+
   return (
     <section id="how-it-works" className="py-20 md:py-32 bg-card/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          variants={stagger}
-          className="text-center mb-16"
-        >
-          <motion.p variants={fadeUp} className="text-xs font-mono text-accent tracking-widest mb-3 uppercase">PROCESS</motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-4">
-            Three Steps to Risk Intelligence
-          </motion.h2>
-        </motion.div>
-
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          variants={stagger}
-          className="grid md:grid-cols-3 gap-8"
-        >
-          {steps.map((step) => (
-            <motion.div key={step.num} variants={fadeUp} className="relative text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mx-auto mb-6">
-                <step.icon className="w-7 h-7 text-primary" />
-              </div>
-              <span className="font-mono text-xs text-primary/60 tracking-widest">{step.num}</span>
-              <h3 className="font-mono text-lg font-semibold text-foreground mt-1 mb-3">{step.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{step.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
+      <Timeline
+        data={timelineData}
+        eyebrow="PROCESS"
+        title="Three Steps to Risk Intelligence"
+        description="From document intake to actionable output in a clear, auditable workflow."
+      />
     </section>
   );
 }
@@ -334,15 +334,31 @@ function DashboardPreviewSection() {
 }
 
 // ─── PRICING (uses dedicated component) ───
-import PricingSectionComponent from '@/components/ui/pricing-section-4';
-
 function PricingSection() {
-  return <PricingSectionComponent />;
+  return (
+    <Suspense
+      fallback={
+        <section id="pricing" className="py-20 md:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="h-10 w-56 mx-auto rounded-md skeleton-cyber mb-4" />
+            <div className="h-4 w-72 mx-auto rounded-md skeleton-cyber mb-10" />
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="h-72 rounded-xl skeleton-cyber" />
+              <div className="h-72 rounded-xl skeleton-cyber" />
+              <div className="h-72 rounded-xl skeleton-cyber" />
+            </div>
+          </div>
+        </section>
+      }
+    >
+      <PricingSectionComponent />
+    </Suspense>
+  );
 }
 // ─── TESTIMONIALS ───
 const testimonials = [
   {
-    quote: "Sentinel AI cut our contract review time by 80%. We now catch risks our legal team used to miss.",
+    quote: <><span className="font-glitch">Sentinel AI</span> cut our contract review time by 80%. We now catch risks our legal team used to miss.</>,
     name: 'Sarah Chen',
     role: 'General Counsel, TechVentures',
     stars: 5,
@@ -354,7 +370,7 @@ const testimonials = [
     stars: 5,
   },
   {
-    quote: "We evaluated 6 contract analysis tools. Sentinel AI was the only one that correctly identified our exposure to auto-renewal traps.",
+    quote: <>We evaluated 6 contract analysis tools. <span className="font-glitch">Sentinel AI</span> was the only one that correctly identified our exposure to auto-renewal traps.</>,
     name: 'Aisha Patel',
     role: 'Head of Procurement, Meridian',
     stars: 5,
@@ -397,7 +413,7 @@ function TestimonialsSection() {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-6 italic">
-                "{t.quote}"
+                {'"'}{t.quote}{'"'}
               </p>
               <div>
                 <p className="font-mono text-sm font-semibold text-foreground">{t.name}</p>
@@ -413,7 +429,10 @@ function TestimonialsSection() {
 
 // ─── FAQ ───
 const faqs = [
-  { q: 'What types of contracts can Sentinel AI analyze?', a: 'Sentinel AI supports any text-based contract format including PDF, DOCX, and plain text. This includes NDAs, service agreements, employment contracts, lease agreements, vendor contracts, and more.' },
+  {
+    q: <>What types of contracts can Sentinel AI analyze?</>,
+    a: <><span className="font-glitch">Sentinel AI</span> supports any text-based contract format including PDF, DOCX, and plain text. This includes NDAs, service agreements, employment contracts, lease agreements, vendor contracts, and more.</>,
+  },
   { q: 'How accurate is the AI risk analysis?', a: 'Our AI achieves a 99.2% detection rate for high-risk clauses based on independent testing. The system is continuously trained on legal precedents and updated contract law.' },
   { q: 'Is my data secure?', a: 'Absolutely. All contracts are encrypted at rest and in transit using AES-256 encryption. We are SOC 2 Type II certified and GDPR compliant. Your data is never used to train our models.' },
   { q: 'Can I try it before committing?', a: 'Yes! Our Starter plan is completely free and lets you analyze up to 5 contracts per month. No credit card required.' },
@@ -480,7 +499,7 @@ function CTASection() {
             Stop Guessing.<br />Start Knowing.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
-            Join thousands of legal professionals who trust Sentinel AI to protect their organizations from contract risk.
+            Join thousands of legal professionals who trust <span className="font-glitch">Sentinel AI</span> to protect their organizations from contract risk.
           </motion.p>
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/signup">

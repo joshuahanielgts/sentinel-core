@@ -24,7 +24,7 @@ export function SentinelLogo({
   const s = sizes[size];
 
   const content = (
-    <div className={cn('flex items-center', s.gap, className)}>
+    <div className={cn('flex items-center whitespace-nowrap shrink-0', s.gap)}>
       <div className="relative">
         <Shield className={cn(s.icon, 'text-primary')} strokeWidth={1.5} />
         <div className={cn(s.icon, 'absolute inset-0 text-primary opacity-30 blur-sm')}>
@@ -32,7 +32,7 @@ export function SentinelLogo({
         </div>
       </div>
       {showText && (
-        <span className={cn('font-mono font-bold tracking-wider', s.text)}>
+        <span className={cn('font-glitch tracking-wider whitespace-nowrap shrink-0', s.text, className)}>
           <span className="text-primary">SENTINEL</span>
           <span className="text-foreground"> AI</span>
         </span>

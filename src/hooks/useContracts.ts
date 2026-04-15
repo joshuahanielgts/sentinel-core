@@ -67,9 +67,10 @@ export function useAnalyzeContract() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (contractId: string) => contractsApi.analyze(contractId),
-    onSuccess: (_data, contractId) => {
+    onSettled: (_data, _error, contractId) => {
       queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

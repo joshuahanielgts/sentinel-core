@@ -1,12 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { analyzeContract } from '@/lib/gemini'
+import { ANALYSIS_MODEL_CANDIDATES, analyzeContract } from '@/lib/gemini'
 import { errorResponse } from '@/lib/errors'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
 import type { Json } from '@/types/database'
 
 export const maxDuration = 300
+
+function formatAnalysisError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : 'Unknown analysis error'
+  const lower = raw.toLowerCase()
+
+  if (
+    lower.includes('fetch failed')
+    || lower.includes('econn')
+    || lower.includes('network')
+    || lower.includes('timeout')
+    || lower.includes('tls')
+    || lower.includes('ssl')
+    || lower.includes('certificate')
+  ) {
+    return 'Unable to reach Gemini API from the server network. Allow outbound HTTPS to generativelanguage.googleapis.com and verify TLS/proxy policy.'
+  }
+
+  if (
+    lower.includes('api key')
+    || lower.includes('permission_denied')
+    || lower.includes('unauthorized')
+    || lower.includes('status: 403')
+    || lower.includes('status code 403')
+  ) {
+    return 'Gemini API key is invalid or lacks access. Verify GEMINI_API_KEY and ensure Gemini API is enabled for the key project.'
+  }
+
+  if (
+    lower.includes('quota')
+    || lower.includes('rate limit')
+    || lower.includes('status: 429')
+    || lower.includes('status code 429')
+  ) {
+    return 'Gemini API rate limit or quota reached. Check quota settings and retry shortly.'
+  }
+
+  return raw
+}
 
 export const POST = withAuth(async (_req, user, params) => {
   try {
@@ -52,7 +90,7 @@ export const POST = withAuth(async (_req, user, params) => {
 
     await supabaseAdmin
       .from('contracts')
-      .update({ status: 'analyzing', updated_at: new Date().toISOString() })
+      .update({ status: 'analyzing', error_message: null, updated_at: new Date().toISOString() })
       .eq('id', contractId)
 
     const { data: run, error: runError } = await supabaseAdmin
@@ -61,7 +99,7 @@ export const POST = withAuth(async (_req, user, params) => {
         contract_id: contractId,
         workspace_id: contract.workspace_id,
         status: 'running',
-        model: 'gemini-2.5-pro',
+        model: ANALYSIS_MODEL_CANDIDATES[0],
       })
       .select()
       .single()
@@ -82,10 +120,7 @@ export const POST = withAuth(async (_req, user, params) => {
       const supportedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'] as const
       type MimeType = typeof supportedTypes[number]
       if (!supportedTypes.includes(contract.mime_type as MimeType)) {
-        return NextResponse.json(
-          { error: 'Unsupported file type for analysis' },
-          { status: 400 }
-        )
+        throw new Error('Unsupported file type for analysis')
       }
 
       const result = await analyzeContract(buffer, contract.mime_type as MimeType)
@@ -114,6 +149,7 @@ export const POST = withAuth(async (_req, user, params) => {
         .from('contracts')
         .update({
           status: 'complete',
+          error_message: null,
           risk_score: result.risk_score,
           summary: result.summary,
           key_obligations: result.key_obligations as unknown as Json,
@@ -126,6 +162,7 @@ export const POST = withAuth(async (_req, user, params) => {
         .from('analysis_runs')
         .update({
           status: 'complete',
+          model: meta.modelUsed,
           prompt_tokens: meta.promptTokens,
           completion_tokens: meta.completionTokens,
           total_tokens: meta.totalTokens,
@@ -144,7 +181,7 @@ export const POST = withAuth(async (_req, user, params) => {
         },
       })
     } catch (analysisError) {
-      const errorMessage = analysisError instanceof Error ? analysisError.message : 'Unknown analysis error'
+      const errorMessage = formatAnalysisError(analysisError)
 
       await supabaseAdmin
         .from('contracts')

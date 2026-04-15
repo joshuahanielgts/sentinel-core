@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { PageTransition } from '@/components/app/PageTransition';
-import { LayoutDashboard, FileText, Settings, LogOut, ChevronDown, Menu } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, LogOut, ChevronDown, Menu, MessageSquare } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { ThemeToggle } from '@/components/app/ThemeToggle';
 import { SentinelLogo } from '@/components/app/SentinelLogo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,17 +15,47 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InteractiveMenu, type InteractiveMenuItem } from '@/components/ui/modern-mobile-menu';
 
-const navItems = [
-  { label: 'Dashboard', path: 'dashboard', icon: LayoutDashboard },
-  { label: 'Contracts', path: 'contracts', icon: FileText },
-  { label: 'Settings', path: 'settings', icon: Settings },
+interface SidebarNavItem {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+  absolute?: boolean;
+  isActive?: (pathname: string) => boolean;
+}
+
+const baseNavItems: SidebarNavItem[] = [
+  {
+    label: 'Dashboard',
+    path: 'dashboard',
+    icon: LayoutDashboard,
+    isActive: (pathname) => pathname.includes('/dashboard'),
+  },
+  {
+    label: 'Contracts',
+    path: 'contracts',
+    icon: FileText,
+    isActive: (pathname) => /\/contracts\/?$/.test(pathname),
+  },
+  {
+    label: 'AI Chat',
+    path: 'chat',
+    icon: MessageSquare,
+    isActive: (pathname) => pathname.includes('/chat'),
+  },
+  {
+    label: 'Settings',
+    path: 'settings',
+    icon: Settings,
+    isActive: (pathname) => pathname.includes('/settings'),
+  },
 ];
 
-function SidebarContent({ workspaceId, workspace, workspaces, location, onNavigate, user, onSignOut }: {
+function SidebarContent({ workspaceId, workspace, workspaces, location, navItems, onNavigate, user, onSignOut }: {
   workspaceId: string | undefined;
   workspace: any;
   workspaces: any[] | undefined;
   location: any;
+  navItems: SidebarNavItem[];
   onNavigate: (path: string) => void;
   user: any;
   onSignOut: () => void;
@@ -66,12 +97,14 @@ function SidebarContent({ workspaceId, workspace, workspaces, location, onNaviga
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
-        {navItems.map(({ label, path, icon: Icon }) => {
-          const isActive = location.pathname.includes(`/${path}`);
+        {navItems.map(({ label, path, icon: Icon, absolute, isActive: isActiveMatcher }) => {
+          const isActive = isActiveMatcher
+            ? isActiveMatcher(location.pathname)
+            : location.pathname.includes(absolute ? path : `/${path}`);
           return (
             <Link
               key={path}
-              to={`/w/${workspaceId}/${path}`}
+              to={absolute ? path : `/w/${workspaceId}/${path}`}
               onClick={() => onNavigate('')}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-mono transition-all',
@@ -105,7 +138,7 @@ function SidebarContent({ workspaceId, workspace, workspaces, location, onNaviga
 export function AppLayout() {
   const { user, signOut } = useAuth();
   const { workspace, setWorkspace } = useWorkspaceContext();
-  const { workspaceId } = useParams();
+  const { workspaceId, contractId } = useParams();
   const { data: workspaces } = useWorkspaces();
   const navigate = useNavigate();
   const location = useLocation();
@@ -119,6 +152,21 @@ export function AppLayout() {
     }
   }, [workspaceId, workspaces]);
 
+  const navItems = useMemo(() => {
+    const items = [...baseNavItems];
+
+    if (contractId) {
+      items.splice(2, 0, {
+        label: 'Contract Detail',
+        path: `contracts/${contractId}`,
+        icon: FileText,
+        isActive: (pathname) => pathname.includes(`/contracts/${contractId}`),
+      });
+    }
+
+    return items;
+  }, [contractId]);
+
   const handleNavigate = (path: string) => {
     setMobileOpen(false);
     if (path) navigate(path);
@@ -131,12 +179,15 @@ export function AppLayout() {
       icon: item.icon,
       onClick: () => navigate(`${base}/${item.path}`),
     })) as InteractiveMenuItem[];
-  }, [workspaceId, navigate]);
+  }, [workspaceId, navigate, navItems]);
 
   const appActiveIndex = useMemo(() => {
-    const idx = navItems.findIndex((item) => location.pathname.includes(`/${item.path}`));
+    const idx = navItems.findIndex((item) => {
+      if (item.isActive) return item.isActive(location.pathname);
+      return location.pathname.includes(item.absolute ? item.path : `/${item.path}`);
+    });
     return idx >= 0 ? idx : 0;
-  }, [location.pathname]);
+  }, [location.pathname, navItems]);
 
   return (
     <div className="flex min-h-screen bg-background scanlines">
@@ -150,6 +201,7 @@ export function AppLayout() {
             workspace={workspace}
             workspaces={workspaces}
             location={location}
+            navItems={navItems}
             onNavigate={handleNavigate}
             user={user}
             onSignOut={() => signOut()}
@@ -167,6 +219,7 @@ export function AppLayout() {
               workspace={workspace}
               workspaces={workspaces}
               location={location}
+              navItems={navItems}
               onNavigate={handleNavigate}
               user={user}
               onSignOut={() => signOut()}

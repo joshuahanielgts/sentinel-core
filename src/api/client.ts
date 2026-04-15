@@ -12,13 +12,38 @@ async function handleUnauthorized() {
   window.location.href = '/login';
 }
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
+let cachedAccessToken = '';
+let authReady = false;
+let authInitStarted = false;
+
+async function ensureAuthCacheReady(): Promise<void> {
+  if (authReady) return;
+
+  if (!authInitStarted) {
+    authInitStarted = true;
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      cachedAccessToken = session?.access_token ?? '';
+      authReady = true;
+    });
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? '';
+  cachedAccessToken = session?.access_token ?? '';
+  authReady = true;
+}
+
+async function getAuthHeaders(includeJsonContentType = false): Promise<Record<string, string>> {
+  await ensureAuthCacheReady();
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${cachedAccessToken}`,
   };
+
+  if (includeJsonContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   return headers;
 }
 
@@ -55,13 +80,14 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 export const apiClient = {
   async get<T>(path: string): Promise<T> {
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(false);
     const response = await request(path, { headers });
     return handleResponse<T>(response);
   },
 
   async post<T>(path: string, body?: unknown): Promise<T> {
-    const headers = await getAuthHeaders();
+    const hasBody = body !== undefined;
+    const headers = await getAuthHeaders(hasBody);
     const response = await request(path, {
       method: 'POST',
       headers,
@@ -71,7 +97,8 @@ export const apiClient = {
   },
 
   async patch<T>(path: string, body?: unknown): Promise<T> {
-    const headers = await getAuthHeaders();
+    const hasBody = body !== undefined;
+    const headers = await getAuthHeaders(hasBody);
     const response = await request(path, {
       method: 'PATCH',
       headers,
@@ -81,7 +108,8 @@ export const apiClient = {
   },
 
   async delete<T>(path: string, body?: unknown): Promise<T> {
-    const headers = await getAuthHeaders();
+    const hasBody = body !== undefined;
+    const headers = await getAuthHeaders(hasBody);
     const response = await request(path, {
       method: 'DELETE',
       headers,
@@ -91,7 +119,7 @@ export const apiClient = {
   },
 
   async stream(path: string, body: unknown): Promise<Response> {
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders(true);
     const response = await request(path, {
       method: 'POST',
       headers,

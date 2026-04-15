@@ -12,23 +12,26 @@ export function MarketingNavbar() {
   if (isMobile) return null;
 
   return (
-    <FloatingNavBar
-      leftSlot={<SentinelLogo size="md" linkTo="/" />}
-      rightSlot={
-        <>
-          <ThemeToggle />
-          <Link to="/login">
-            <Button size="sm" variant="ghost" className="rounded-full px-4 text-xs font-semibold">
-              Sign In
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button size="sm" className="rounded-full ml-1 px-4 text-xs font-semibold btn-glow">
-              Get Started
-            </Button>
-          </Link>
-        </>
-      }
-    />
+    <>
+      <div className="fixed top-4 left-4 z-50">
+        <SentinelLogo size="md" linkTo="/" />
+      </div>
+
+      <FloatingNavBar leftSlot={<></>} rightSlot={<></>} />
+
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <ThemeToggle />
+        <Link to="/login">
+          <Button size="sm" variant="ghost" className="rounded-full px-4 text-xs font-semibold">
+            Sign In
+          </Button>
+        </Link>
+        <Link to="/signup">
+          <Button size="sm" className="rounded-full px-4 text-xs font-semibold btn-glow">
+            Get Started
+          </Button>
+        </Link>
+      </div>
+    </>
   );
 }

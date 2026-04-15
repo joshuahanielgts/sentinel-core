@@ -4,8 +4,8 @@ import type { GeminiAnalysisResponse } from '@/types/api'
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
-export const ANALYSIS_MODEL_CANDIDATES = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
-export const DEFAULT_CHAT_MODEL_ID = 'gemini-2.5-pro'
+export const ANALYSIS_MODEL_CANDIDATES = ['gemini-2.0-flash', 'gemini-1.5-pro'] as const
+export const DEFAULT_CHAT_MODEL_ID = 'gemini-2.0-flash'
 
 const ANALYSIS_SYSTEM_PROMPT = `
 You are a senior contract attorney AI. Your job is to analyze legal contracts and return a structured risk assessment.

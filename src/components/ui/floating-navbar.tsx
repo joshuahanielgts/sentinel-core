@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { DollarSign, Info, Mail, LucideIcon, Shield, Activity, CircleHelp } from "lucide-react";
+import { DollarSign, LucideIcon, Shield, Activity, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { SentinelLogo } from "@/components/app/SentinelLogo";
@@ -27,9 +27,6 @@ const navItems: NavItem[] = [
   { name: "How It Works", type: "anchor", target: "how-it-works", icon: Activity },
   { name: "Pricing", type: "anchor", target: "pricing", icon: DollarSign },
   { name: "FAQ", type: "anchor", target: "faq", icon: CircleHelp },
-  { name: "Pricing Page", type: "page", url: "/pricing", icon: DollarSign },
-  { name: "About", type: "page", url: "/about", icon: Info },
-  { name: "Contact", type: "page", url: "/contact", icon: Mail },
 ];
 
 interface FloatingNavBarProps {
@@ -56,8 +53,7 @@ export function FloatingNavBar({ className, leftSlot, rightSlot }: FloatingNavBa
       return;
     }
 
-    navigate("/home");
-    setTimeout(scroll, 100);
+    navigate(`/home#${id}`);
   };
 
   useEffect(() => {

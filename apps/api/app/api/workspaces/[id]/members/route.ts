@@ -34,15 +34,39 @@ export const GET = withAuth(async (_req, user, params) => {
         id,
         user_id,
         role,
-        created_at,
-        profiles:user_id (full_name, avatar_url)
+        created_at
       `)
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: true })
 
     if (error) throw error
 
-    return NextResponse.json({ data: members })
+    const userIds = (members ?? []).map((member) => member.user_id)
+
+    let profiles: Array<{ id: string; full_name: string | null; avatar_url: string | null }> = []
+    if (userIds.length > 0) {
+      const { data: profileRows, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds)
+
+      if (profileError) throw profileError
+      profiles = profileRows ?? []
+    }
+
+    const profileById = new Map(
+      (profiles ?? []).map((profile) => [profile.id, {
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+      }])
+    )
+
+    const membersWithProfiles = (members ?? []).map((member) => ({
+      ...member,
+      profiles: profileById.get(member.user_id) ?? null,
+    }))
+
+    return NextResponse.json({ data: membersWithProfiles })
   } catch (error) {
     return errorResponse(error)
   }

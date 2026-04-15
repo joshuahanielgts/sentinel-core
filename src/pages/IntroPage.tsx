@@ -4,22 +4,54 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield } from 'lucide-react';
 import { SentinelLogo } from '@/components/app/SentinelLogo';
 
-const TOTAL_DURATION = 5000; // 5 seconds total
+const INTRO_SEEN_KEY = 'sentinel:intro-seen';
+const TOTAL_DURATION = 1200;
+
+function markIntroSeen() {
+  try {
+    window.sessionStorage.setItem(INTRO_SEEN_KEY, '1');
+  } catch {
+    // Ignore storage edge cases (private mode, blocked storage)
+  }
+}
+
+function shouldSkipIntro() {
+  try {
+    const alreadySeen = window.sessionStorage.getItem(INTRO_SEEN_KEY) === '1';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return alreadySeen || reducedMotion;
+  } catch {
+    return false;
+  }
+}
 
 export default function IntroPage() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState(0); // 0: logo, 1: tagline, 2: particles, 3: exit
 
+  const goHome = () => {
+    markIntroSeen();
+    navigate('/home', { replace: true });
+  };
+
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 800);
-    const t2 = setTimeout(() => setPhase(2), 2200);
-    const t3 = setTimeout(() => setPhase(3), 3800);
-    const t4 = setTimeout(() => navigate('/home', { replace: true }), TOTAL_DURATION);
+    if (shouldSkipIntro()) {
+      navigate('/home', { replace: true });
+      return;
+    }
+
+    const t1 = setTimeout(() => setPhase(1), 180);
+    const t2 = setTimeout(() => setPhase(2), 520);
+    const t3 = setTimeout(() => setPhase(3), 900);
+    const t4 = setTimeout(() => {
+      markIntroSeen();
+      navigate('/home', { replace: true });
+    }, TOTAL_DURATION);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, [navigate]);
 
   return (
-    <div className="fixed inset-0 z-[9999] overflow-hidden cursor-pointer" onClick={() => navigate('/home', { replace: true })}>
+    <div className="fixed inset-0 z-[9999] overflow-hidden cursor-pointer" onClick={goHome}>
       {/* Gradient background */}
       <div className="absolute inset-0" style={{
         background: 'radial-gradient(ellipse at 50% 30%, hsl(217 60% 12%) 0%, hsl(215 62% 5%) 50%, hsl(220 70% 2%) 100%)',
@@ -194,7 +226,7 @@ export default function IntroPage() {
         className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[10px] text-muted-foreground/40 tracking-widest"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
+        transition={{ delay: 0.3 }}
       >
         CLICK ANYWHERE TO SKIP
       </motion.p>

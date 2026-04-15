@@ -6,6 +6,7 @@ export function useDashboard(workspaceId: string | undefined) {
     queryKey: ['dashboard-stats', workspaceId],
     queryFn: () => dashboardApi.getStats(workspaceId!),
     enabled: !!workspaceId,
-    refetchInterval: 30000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 }

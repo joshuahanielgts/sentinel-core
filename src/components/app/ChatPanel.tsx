@@ -88,7 +88,7 @@ export function ChatPanel({ contractId, onClose }: ChatPanelProps) {
   };
 
   return (
-    <div className="fixed right-0 top-0 bottom-0 w-96 bg-card/95 backdrop-blur-lg border-l border-border z-50 flex flex-col">
+    <div className="fixed right-0 top-0 h-full w-96 z-50 glass border-l border-border flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center gap-2">
         <MessageSquare className="w-4 h-4 text-cyan" />
@@ -158,40 +158,42 @@ export function ChatPanel({ contractId, onClose }: ChatPanelProps) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border flex gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                'h-10 w-10 shrink-0',
-                redTeam ? 'text-destructive shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-muted-foreground'
-              )}
-              onClick={() => setRedTeam(!redTeam)}
-            >
-              <Target className="w-4 h-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {redTeam ? 'Red Team Mode: ACTIVE — AI simulates opposing counsel' : 'Red Team Mode: Disabled'}
-          </TooltipContent>
-        </Tooltip>
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Ask about this contract..."
-          className="flex-1 bg-background font-mono text-sm"
-        />
-        <Button
-          size="icon"
-          onClick={handleSend}
-          disabled={sendMessage.isPending || !input.trim()}
-          className="h-10 w-10 shrink-0 btn-glow"
-        >
-          <Send className="w-4 h-4" />
-        </Button>
+      <div className="p-4 border-t border-border bg-background">
+        <div className="flex gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'h-10 w-10 shrink-0',
+                  redTeam ? 'text-destructive shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'text-muted-foreground'
+                )}
+                onClick={() => setRedTeam(!redTeam)}
+              >
+                <Target className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {redTeam ? 'Red Team Mode: ACTIVE — AI simulates opposing counsel' : 'Red Team Mode: Disabled'}
+            </TooltipContent>
+          </Tooltip>
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Ask about this contract..."
+            className="flex-1 bg-background font-mono text-sm"
+          />
+          <Button
+            size="icon"
+            onClick={handleSend}
+            disabled={sendMessage.isPending || !input.trim()}
+            className="h-10 w-10 shrink-0 btn-glow"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
