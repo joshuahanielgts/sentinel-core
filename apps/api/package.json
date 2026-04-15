@@ -8,7 +8,9 @@
         "dev:fresh": "npm run dev:clean && npm run dev",
         "build": "next build",
         "start": "next start -p 3001",
-        "lint": "next lint"
+        "lint": "next lint",
+        "deploy": "cd ../.. && npx vercel deploy --prod --yes",
+        "deploy:preview": "cd ../.. && npx vercel deploy --yes"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.0",

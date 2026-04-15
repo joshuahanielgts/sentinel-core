@@ -93,6 +93,10 @@ Also ensure **Output Directory** is **empty** (not `dist`). `dist` is only for t
 
 ### 1. Backend (Next.js API)
 
+`apps/api/vercel.json` uses **legacy `builds`** with `@vercel/next` so Vercel always runs a real `next build` (the default “framework only” path was resolving to a static build and returning `404` for `/api/*`). When `builds` is present, **Build & Development Settings** in the Vercel dashboard for that project are **ignored** for install/build — that is expected ([see Vercel note](https://vercel.link/unused-build-settings)).
+
+**Deploy with Vercel CLI (backend only):** run from the **repository root** (not inside `apps/api` alone): `npx vercel link` → choose **sentinel-core-backend**, then `npm run deploy:api` or `cd apps/api && npm run deploy`. Do **not** set a bad `VERCEL_TOKEN` in your environment (invalid tokens cause “token is not valid”; remove it or use a valid token from the Vercel dashboard).
+
 1. Import this GitHub repo.
 2. **Root Directory:** `apps/api` (**required** — the literal text `apps/api`, not `/` or empty).
 3. Framework: **Next.js** (auto-detected from `apps/api`).
@@ -182,7 +186,7 @@ cd apps/api && npm run build
 | `401` from API | JWT sent from Supabase session; not expired |
 | Analysis timeout on Vercel | Plan limits; consider Pro or longer `maxDuration` eligibility |
 | SPA 404 on refresh | Add SPA rewrites (see `vercel.frontend.json`); Output Directory `dist` |
-| API: Vercel `404` on `/api/health` | Backend **Root Directory** must be **`apps/api`**, not repo root. Empty root = Vite build + no API routes. |
+| API: Vercel `404` on `/api/health` | Backend **Root Directory** must be **`apps/api`**, not repo root. Empty root = Vite build + no API routes. Repo ships **`apps/api/vercel.json`** legacy `builds` so the API always runs **`next build`**. |
 | API build: *Next.js output directory `dist` not found* | Backend project must **not** use `dist`. Clear **Output Directory** in Vercel. Only the **frontend** project uses `dist`. |
 | Invalid Supabase key | Use JWT keys (`eyJ...`), not publishable-only keys |
 
