@@ -103,6 +103,11 @@ Use **two Vercel projects** (one for the API, one for the SPA).
 
 7. Deploy. Note the API URL, e.g. `https://sentinel-api.vercel.app`.
 
+8. **Smoke-test after deploy** (no auth needed for these):
+   - `https://<your-api>.vercel.app/api/health` → JSON `{ "ok": true, ... }`
+   - `https://<your-api>.vercel.app/` → JSON with `service: sentinel-api`  
+   If you still see Vercel’s generic `404 NOT_FOUND` page, the project is not running this Next app (wrong root directory, or old deployment). **Redeploy** after pulling latest `main`.
+
 **Contract analysis** uses `export const maxDuration = 300` on the analyze route. On **Vercel Hobby**, serverless execution time is limited (often 10–60s depending on plan). If analysis times out, upgrade to **Pro** or run the API on a host with longer limits.
 
 ### 2. Frontend (Vite static app)
