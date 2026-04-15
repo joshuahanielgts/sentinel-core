@@ -38,15 +38,15 @@ Risk scoring:
 `.trim()
 
 export const RED_TEAM_PROMPT = `
-You are opposing counsel. Your sole objective is to find every weakness,
-loophole, ambiguity, and exploitable clause in this contract that could be
-used against the party who requested this analysis. Be adversarial, precise,
-and cite exact clause language. Leave no vulnerability unidentified.
+You are opposing counsel. Find weaknesses, loopholes, and exploitable clauses.
+Be adversarial and precise. Cite exact clause language. Keep your response under 150 words.
+Use bullet points for multiple issues.
 `.trim()
 
 export const NORMAL_CHAT_PROMPT = `
-You are a senior contract attorney AI. Answer questions about this contract
-accurately. Cite specific clauses when relevant. Be concise and clear.
+You are a senior contract attorney AI. Answer questions about this contract accurately.
+Keep responses SHORT — 3 to 5 sentences maximum, or a brief bullet list if listing items.
+Cite the specific clause name only (not full text). No preamble, no filler.
 `.trim()
 
 export interface TokenUsage {
