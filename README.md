@@ -86,7 +86,13 @@ Use **two Vercel projects** (one for the API, one for the SPA).
 1. Import this GitHub repo.
 2. **Root Directory:** `apps/api`
 3. Framework: Next.js (auto-detected).
-4. **Environment variables** (Production & Preview as needed):
+4. **Build settings (important):**
+   - **Output Directory:** leave **empty** — do **not** set `dist`.  
+     Next.js writes to `.next/`; Vercel picks that up automatically.  
+     If you see *“output directory dist was not found”*, your API project was given the **frontend** setting by mistake — clear **Output Directory** under Project → Settings → General → Build & Development Settings, then redeploy.
+   - **Build Command:** `npm run build` (default).
+   - **Install Command:** `npm install` (default).
+6. **Environment variables** (Production & Preview as needed):
 
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
@@ -95,7 +101,7 @@ Use **two Vercel projects** (one for the API, one for the SPA).
    - `FRONTEND_URL` — set to your **deployed frontend URL**, e.g. `https://your-app.vercel.app`  
      (must match the browser origin exactly, including `https`.)
 
-5. Deploy. Note the API URL, e.g. `https://sentinel-api.vercel.app`.
+7. Deploy. Note the API URL, e.g. `https://sentinel-api.vercel.app`.
 
 **Contract analysis** uses `export const maxDuration = 300` on the analyze route. On **Vercel Hobby**, serverless execution time is limited (often 10–60s depending on plan). If analysis times out, upgrade to **Pro** or run the API on a host with longer limits.
 
@@ -160,6 +166,7 @@ cd apps/api && npm run build
 | `401` from API | JWT sent from Supabase session; not expired |
 | Analysis timeout on Vercel | Plan limits; consider Pro or longer `maxDuration` eligibility |
 | SPA 404 on refresh | Root `vercel.json` rewrites; Output Directory `dist` |
+| API build: *Next.js output directory `dist` not found* | Backend project must **not** use `dist`. Clear **Output Directory** in Vercel (Next.js uses `.next` automatically). Only the **frontend** project uses `dist`. |
 | Invalid Supabase key | Use JWT keys (`eyJ...`), not publishable-only keys |
 
 ---
