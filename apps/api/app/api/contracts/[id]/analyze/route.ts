@@ -37,10 +37,12 @@ function formatAnalysisError(error: unknown): string {
   if (
     lower.includes('quota')
     || lower.includes('rate limit')
-    || lower.includes('status: 429')
-    || lower.includes('status code 429')
+    || lower.includes('rate_limit')
+    || lower.includes('resource_exhausted')
+    || lower.includes('exhausted')
+    || lower.includes('429')
   ) {
-    return 'Gemini API rate limit or quota reached. Check quota settings and retry shortly.'
+    return 'Gemini API quota exceeded. The free tier allows 1,500 requests/day for gemini-2.0-flash. Wait 1 minute and retry, or check your quota at console.cloud.google.com.'
   }
 
   return raw

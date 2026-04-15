@@ -4,8 +4,8 @@ import type { GeminiAnalysisResponse } from '@/types/api'
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
-export const ANALYSIS_MODEL_CANDIDATES = ['gemini-2.5-pro', 'gemini-2.0-flash'] as const
-export const DEFAULT_CHAT_MODEL_ID = 'gemini-2.5-pro'
+export const ANALYSIS_MODEL_CANDIDATES = ['gemini-2.0-flash', 'gemini-2.5-pro'] as const
+export const DEFAULT_CHAT_MODEL_ID = 'gemini-2.0-flash'
 
 const ANALYSIS_SYSTEM_PROMPT = `
 You are a senior contract attorney AI. Your job is to analyze legal contracts and return a structured risk assessment.
@@ -94,8 +94,12 @@ export async function analyzeContract(
   let durationMs = 0
   let modelUsed: (typeof ANALYSIS_MODEL_CANDIDATES)[number] = ANALYSIS_MODEL_CANDIDATES[0]
 
-  for (const modelId of ANALYSIS_MODEL_CANDIDATES) {
+  for (let i = 0; i < ANALYSIS_MODEL_CANDIDATES.length; i++) {
+    const modelId = ANALYSIS_MODEL_CANDIDATES[i]
     const startTime = Date.now()
+
+    // Brief pause before each fallback attempt to avoid cascading rate-limit hits
+    if (i > 0) await new Promise((r) => setTimeout(r, 2000))
 
     try {
       const model = genAI.getGenerativeModel({ model: modelId })
@@ -112,6 +116,10 @@ export async function analyzeContract(
       break
     } catch (error) {
       lastError = error
+      const msg = error instanceof Error ? error.message.toLowerCase() : ''
+      // If it's not a rate-limit/quota error, don't bother trying the next model
+      const isRetryable = msg.includes('429') || msg.includes('quota') || msg.includes('rate') || msg.includes('exhausted') || msg.includes('resource_exhausted')
+      if (!isRetryable) break
     }
   }
 
