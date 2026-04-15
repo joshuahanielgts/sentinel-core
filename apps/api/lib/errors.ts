@@ -51,7 +51,7 @@ export function errorResponse(error: unknown): NextResponse {
     }
 
     return NextResponse.json(
-      { error: supaError.message },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

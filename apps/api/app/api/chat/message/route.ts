@@ -97,7 +97,8 @@ export const POST = withAuth(async (req, user) => {
     const basePrompt = mode === 'redteam' ? RED_TEAM_PROMPT : NORMAL_CHAT_PROMPT
     const systemPrompt = `${basePrompt}\n\n--- CONTRACT CONTEXT ---\n${contractContext}`
 
-    const chatHistory = (history || []).map((msg) => ({
+    const priorMessages = (history || []).slice(0, -1)
+    const chatHistory = priorMessages.map((msg) => ({
       role: msg.role === 'user' ? 'user' as const : 'model' as const,
       parts: [{ text: msg.content }],
     }))

@@ -4,6 +4,9 @@ import type { GeminiAnalysisResponse } from '@/types/api'
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
 
+export const ANALYSIS_MODEL_CANDIDATES = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
+export const DEFAULT_CHAT_MODEL_ID = 'gemini-2.5-pro'
+
 const ANALYSIS_SYSTEM_PROMPT = `
 You are a senior contract attorney AI. Your job is to analyze legal contracts and return a structured risk assessment.
 
@@ -51,6 +54,7 @@ export interface TokenUsage {
   completionTokens: number
   totalTokens: number
   durationMs: number
+  modelUsed: string
 }
 
 export interface AnalysisResult extends GeminiAnalysisResponse {
@@ -65,8 +69,6 @@ export async function analyzeContract(
   fileBuffer: Uint8Array,
   mimeType: SupportedMimeType
 ): Promise<AnalysisResult> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
-
   const parts: Part[] = []
 
   if (mimeType.includes('wordprocessingml')) {
@@ -85,18 +87,42 @@ export async function analyzeContract(
 
   parts.push({ text: 'Analyze this contract.' })
 
-  const startTime = Date.now()
+  let lastError: unknown
+  let result:
+    | Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>['generateContent']>>
+    | undefined
+  let durationMs = 0
+  let modelUsed: (typeof ANALYSIS_MODEL_CANDIDATES)[number] = ANALYSIS_MODEL_CANDIDATES[0]
 
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts }],
-    systemInstruction: ANALYSIS_SYSTEM_PROMPT,
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.1,
-    },
-  })
+  for (const modelId of ANALYSIS_MODEL_CANDIDATES) {
+    const startTime = Date.now()
 
-  const durationMs = Date.now() - startTime
+    try {
+      const model = genAI.getGenerativeModel({ model: modelId })
+      result = await model.generateContent({
+        contents: [{ role: 'user', parts }],
+        systemInstruction: ANALYSIS_SYSTEM_PROMPT,
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+        },
+      })
+      durationMs = Date.now() - startTime
+      modelUsed = modelId
+      break
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (!result) {
+    if (lastError instanceof Error) {
+      throw lastError
+    }
+
+    throw new Error('Gemini analysis failed for all configured models')
+  }
+
   const raw = result.response.text()
   const usage = result.response.usageMetadata
 
@@ -114,11 +140,12 @@ export async function analyzeContract(
       completionTokens: usage?.candidatesTokenCount ?? 0,
       totalTokens: usage?.totalTokenCount ?? 0,
       durationMs,
+      modelUsed,
     },
   }
 }
 
 export function getChatModel() {
-  return genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
+  return genAI.getGenerativeModel({ model: DEFAULT_CHAT_MODEL_ID })
 }
 
